@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- Content -->
+<div class="main-block">
+    {% set top_index = namespace(value=0) %}
+    {% set cont_index = namespace(value=0) %}
+
+    {% for cid, cname in chapter.items() %}
+    <div style="padding: 30px;">
+    <h3>บทที่ {{ cid}}   {{ cname }}</h3>
+    <div class="chapter-block">
+    <div style="margin-left: 50px;">
+    {% for tid, tname in topic[top_index.value].items() %}
+    <div> {{ tid }}. {{ tname }}
+
+    {% for ctid, cinfo in content[cont_index.value].items() %}  
+    
+    {% if 'K' in ctid %}
+    <a href="javascript:openswf( '{{ cinfo }}' );"> {{ ctid }} </a>
+    {% else %}
+    <a href="{{ cinfo }}" target="popup" onclick="window.open('{{ cinfo }}','popup','width=1000,height=800'); return false;"> {{ ctid }} </a>
+
+    {% endif %}
+    {% endfor %}
+    {% set cont_index.value = cont_index.value + 1 %}
+    </div>
+    {% endfor %}
+    {% set top_index.value = top_index.value + 1 %}
+    </div>
+    </div>
+    </div>
+        
+    {% endfor %}
+</div>
+
+<script>
+function openswf(kpart){
+    window.open(kpart, "popwindow","resizable=no,menubar=no,directories=no,status=no,location=no,scrollbars=yes,width=1000,height=800");
+}
+</script>
+{% endblock content%}
