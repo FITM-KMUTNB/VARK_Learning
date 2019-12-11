@@ -9,6 +9,7 @@ app.config['SECRET_KEY'] = 'b298171a0f08f07bda7e60973c1461f253da4918718584d43c0c
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database/vark_db.db'
 db = SQLAlchemy(app)
 
+#Test
 
 @app.route('/', methods=['GET','POST'])
 @app.route('/index', methods=['GET','POST'])
