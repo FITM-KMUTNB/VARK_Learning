@@ -1,3 +1,7 @@
+body{
+  background-color: rgb(231, 227, 227);
+  
+}
 /* Add a black background color to the top navigation */
 .topnav {
     background-color: rgb(70, 70, 70);
@@ -37,17 +41,19 @@
 
 /* Content */
 .main-block{
-    position: absolute;;
-    margin-top: 50px;
-    margin-left: 150px;
-    padding: 5px;
-
+    margin: 80px;
+    padding-left: 10%;
+    padding-right: 10%;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 3px;
+   
+    
 }
 
 .chapter-block{
     padding: 10px;
     position: relative;
-    background-color: rgb(170, 170, 170,.5);
     width:1000px;
   
 }
@@ -85,4 +91,22 @@
 
 .topic-input{
   margin-left: 60px;
+}
+
+
+/* Login form */
+/* Set a style for all buttons */
+button {
+  background-color: rgb(131, 140, 145);
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* Add a hover effect for buttons */
+button:hover {
+  opacity: 0.8;
 }

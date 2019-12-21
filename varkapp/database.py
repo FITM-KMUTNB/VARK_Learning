@@ -510,4 +510,10 @@ def get_content():
         topics.append(dict_top)
 
     return chapters, topics, contents
-#hello1
+
+def create_varkdb():
+    create_subject()
+    create_chapter()
+    create_topic()
+    create_content()
+#create_varkdb()
