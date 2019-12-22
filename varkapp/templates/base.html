@@ -10,7 +10,13 @@
     <!-- Header bar -->
     <div class="topnav">
         <a class="active" href="{{ url_for('index') }}">VARK Learning</a>
-        <a href="{{ url_for('login') }}" style="float:right;">Sign in</a>
+        {% if current_user.is_authenticated %}
+            
+            <a href="{{ url_for('logout') }}" style="float:right;">Log out</a>
+            <a href=""  style="float:right;">{{ current_user.firstname }}</a>
+        {% else %}
+            <a href="{{ url_for('login') }}" style="float:right;">Sign in</a>
+        {% endif %}
     </div> 
     <!-- End Header bar -->
 </head>

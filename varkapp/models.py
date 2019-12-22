@@ -1,5 +1,9 @@
-from varkapp import db
+from varkapp import db, login_manager
+from flask_login import UserMixin
 
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -38,7 +42,7 @@ class Content(db.Model):
     def __repr__(self):
         return f"Content('{self.file_name}','{self.c_type}')"
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     studentid = db.Column(db.String(20), unique=True, nullable=False)
     firstname = db.Column(db.String(20), unique=True, nullable=False)
