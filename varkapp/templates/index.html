@@ -18,6 +18,9 @@
     
     {% if 'K' in ctid %}
     <a href="javascript:openswf( '{{ cinfo }}' );"> {{ ctid }} </a>
+
+    {% elif 'P' in ctid or 'E' in ctid or 'T' in ctid %}
+    <a href="{{ url_for('exercise', testfile=cinfo) }}"> {{ ctid }}</a>
     {% else %}
     <a href="{{ cinfo }}" target="popup" onclick="window.open('{{ cinfo }}','popup','width=1000,height=800'); return false;"> {{ ctid }} </a>
 

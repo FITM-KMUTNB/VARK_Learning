@@ -3,10 +3,11 @@ from varkapp import app, db, bcrypt
 from varkapp.forms import RegistrationForm, LoginForm
 from varkapp.models import get_content, User
 from flask_login import login_user, current_user, logout_user, login_required
+import pdfplumber
+import re
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
-@login_required
 def index():
     chapter, topic, content = get_content()
     return render_template('index.html', title = "VARK", chapter=chapter, topic=topic, content=content)
@@ -47,3 +48,25 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+@app.route('/exercise/', methods=['GET', 'POST'])
+def exercise():
+    
+    if request.method == 'POST':
+        quiz_number = request.form.get('quiz_number')
+        select_choice = []
+        for select in range(1, int(quiz_number)+1):
+            select_choice.append(request.form['choice'+str(select)])
+        print(select_choice)
+        return redirect(url_for('index'))
+    else:
+        testfile = request.args.get('testfile', default='', type=str)
+        pdf = pdfplumber.open("varkapp/"+testfile)
+        text = []
+        for page in range(0, len(pdf.pages)):
+            pages = pdf.pages[page].extract_text().splitlines()
+            for line in pages:
+                my_new_string = re.sub('�', 'า', line)
+                text.append(my_new_string)
+    
+        return render_template('exercise.html', content = text)
