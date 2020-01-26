@@ -8,20 +8,19 @@
         <h3>Registration</h3>
         <p>Please fill in this form to create an account.</p>
      <hr>
+     <!-- Gender -->
     <div class="form-group">
-        {{ form.studentid.label(class="form-control-label") }}
-
-        {% if form.studentid.errors %}
-            {{ form.studentid(class="form-control form-control-lg is-invalid") }}
-            <div class="invalid-feedback">
-                {% for error in form.studentid.errors %}
-                    <span>{{ error }}</span>
-                {% endfor %}
-            </div>
-        {% else %}
-            {{ form.studentid(class="form-control form-control-lg") }}
-        {% endif %}
+        {{ form.gender.label(class="form-control-label") }}<br>
+        &nbsp;
+        {% for subfield in form.gender %}
+            <tr>
+            <td>{{ subfield }}</td>
+            <td>{{ subfield.label }}</td> &nbsp;
+            </tr>
+        {% endfor %}
     </div>
+
+    <!-- Firstname -->
     <div class="form-group">
         {{ form.firstname.label(class="form-control-label") }}
 
@@ -36,6 +35,8 @@
             {{ form.firstname(class="form-control form-control-lg") }}
         {% endif %}
     </div>
+
+    <!-- Lastname -->
     <div class="form-group">
         {{ form.lastname.label(class="form-control-label") }}
 
@@ -50,7 +51,24 @@
             {{ form.lastname(class="form-control form-control-lg") }}
         {% endif %}
     </div>
+
+     <!-- Age -->
+     <div class="form-group">
+        {{ form.age.label(class="form-control-label") }}
+
+        {% if form.age.errors %}
+            {{ form.age(class="form-control form-control-lg is-invalid") }}
+            <div class="invalid-feedback">
+                {% for error in form.age.errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% else %}
+            {{ form.age(class="form-control form-control-lg") }}
+        {% endif %}
+    </div>
     
+    <!-- Email -->
     <div class="form-group">
         {{ form.email.label(class="form-control-label") }}
         {% if form.email.errors %}
@@ -64,6 +82,8 @@
             {{ form.email(class="form-control form-control-lg") }}
         {% endif %}
     </div>
+
+    <!-- Password -->
     <div class="form-group">
         {{ form.password.label(class="form-control-label") }}
         {% if form.password.errors %}
@@ -77,6 +97,8 @@
             {{ form.password(class="form-control form-control-lg") }}
         {% endif %}
     </div>
+
+    <!-- Confirm password -->
     <div class="form-group">
         {{ form.confirm_password.label(class="form-control-label") }}
         {% if form.confirm_password.errors %}
@@ -91,6 +113,7 @@
         {% endif %}
     
         <hr>
+<!-- Submit -->
 <div class="form-group">
     {{ form.submit(class="btn btn-outline-info") }}
 </div>

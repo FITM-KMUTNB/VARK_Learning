@@ -7,29 +7,38 @@
 
     {% for cid, cname in chapter.items() %}
     <div style="padding: 30px;">
-    <h3>บทที่ {{ cid}}   {{ cname }}</h3>
+    <h3>{{ cname }}</h3>
     <hr>
     <div class="chapter-block">
     <div style="margin-left: 50px;">
-    {% for tid, tname in topic[top_index.value].items() %}
-    <div> {{ tid }}. {{ tname }}
+        {% for tid, tname in topic[top_index.value].items() %}
+        <div> {{ tid }}. {{ tname }}
+        &nbsp;&nbsp;
+            {% for ctid, cinfo in content[cont_index.value].items() %}  
+            
+            {% if 'K' in ctid %}
+            <a href="javascript:openswf( '{{ cinfo }}' );"> {{ ctid }} </a>
 
-    {% for ctid, cinfo in content[cont_index.value].items() %}  
-    
-    {% if 'K' in ctid %}
-    <a href="javascript:openswf( '{{ cinfo }}' );"> {{ ctid }} </a>
+            {% elif 'P' == ctid %}
+            <a href="{{ url_for('exercise', testfile=cinfo, chapterid=cid, topicid=tid) }}"> Pretest</a>
+            {% elif 'E' == ctid %}
+            <a href="{{ url_for('exercise', testfile=cinfo, chapterid=cid, topicid=tid) }}"> Exercise</a>
+            {% elif 'T' == ctid %}
+            <a href="{{ url_for('exercise', testfile=cinfo, chapterid=cid, topicid=tid) }}"> Test</a>
+            {% else %}
+            <a href="{{ cinfo }}" target="popup" onclick="window.open('{{ cinfo }}','popup','width=1000,height=800');learntype('{{ ctid }}'); return false;"> {{ ctid }} </a>
 
-    {% elif 'P' in ctid or 'E' in ctid or 'T' in ctid %}
-    <a href="{{ url_for('exercise', testfile=cinfo) }}"> {{ ctid }}</a>
-    {% else %}
-    <a href="{{ cinfo }}" target="popup" onclick="window.open('{{ cinfo }}','popup','width=1000,height=800'); return false;"> {{ ctid }} </a>
-
-    {% endif %}
-    {% endfor %}
-    {% set cont_index.value = cont_index.value + 1 %}
-    </div>
-    {% endfor %}
-    {% set top_index.value = top_index.value + 1 %}
+            {% endif %}
+            {% endfor %}
+            {% set get_topicDB = Topic.query.filter_by(number=tid, chapter_id=cid).first().id %}
+            {% set get_score = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).first().getpoint %}
+            {% set full_score = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).first().fullpoint %}
+            
+            {{ get_score }}
+        {% set cont_index.value = cont_index.value + 1 %}
+        </div>
+        {% endfor %}
+        {% set top_index.value = top_index.value + 1 %}
     </div>
     </div>
     </div>
@@ -39,7 +48,41 @@
 
 <script>
 function openswf(kpart){
+ 
+    $.ajax({
+        url: "/learn_type",
+        type: "post", //send it through get method
+        data:{'learntype': 'K'},
+        
+    })
+    .done(function(data){
+        if(data.error){
+            console.log("Error")
+        }
+        else{
+            console.log(data.response)
+        }
+
+    });
     window.open(kpart, "popwindow","resizable=no,menubar=no,directories=no,status=no,location=no,scrollbars=yes,width=1000,height=800");
+}
+function learntype(type){
+  
+    $.ajax({
+        url: "/learn_type",
+        type: "post", //send it through get method
+        data:{'learntype': type},
+        
+    })
+    .done(function(data){
+        if(data.error){
+            console.log("Error")
+        }
+        else{
+            console.log(data.response)
+        }
+
+    });
 }
 </script>
 {% endblock content%}

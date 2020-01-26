@@ -5,30 +5,30 @@
    <div style="padding: 30px; margin-left: 40px;">
     <form action="" method="POST">
     {% if content %}
-        <h3> {{ content[0] }} </h3>
+        <h3> {{ title }} </h3>
         <hr>
         
         {% set quiz_number = namespace(value=0) %}
-        {% for con in content[1:] %}  
-            {% if '1.' in con or '2.' in con or '3.' in con or '4.' in con or '5.' in con or '6.' in con or
-            '7.' in con or '8.' in con or '9.' in con or '10.' in con %}
-                <div>
-                    {{ con }}
-                    {% set quiz_number.value = quiz_number.value + 1 %}
-                </div>
-            {% elif 'ก.' in con or 'ข.' in con or 'ค.' in con or 'ง.' in con %}
-                <div style="margin-left: 30px;">
-                    <input type="radio" name="choice{{quiz_number.value}}" value="{{ con[0] }}">  {{ con }}<br>
-                </div>
-            {% else %}
-                <div>
-                    {{ con }}
-                </div>
-            {% endif %} 
+        {% for question in content %}  
+           
+            <div>
+                {{ question }}
+                {% set quiz_number.value = quiz_number.value + 1 %}
+            </div>
+            <br>
+            {% for choice in content[question] %}  
+            <div style="margin-left: 30px;">
+                <input type="radio" name="choice{{quiz_number.value}}" value="{{ choice }}" required>  
+                &nbsp;  {{ choice }} {{content[question][choice]}}
+                <br>
+            </div>
+       
            <br>   
+           {% endfor %}
         {% endfor %}
         
     {% endif %}
+        <input type="text" name="topic" value="{{quiz_number.value}}" hidden>
         <input type="text" name="quiz_number" value="{{quiz_number.value}}" hidden>
         <center><input type="submit" class="btn btn-outline-info" value="Submit"></center>
     </form>

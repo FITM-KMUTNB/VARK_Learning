@@ -44,13 +44,25 @@ class Content(db.Model):
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    studentid = db.Column(db.String(20), unique=True, nullable=False)
+    gender = db.Column(db.String(10), unique=False, nullable=False)
     firstname = db.Column(db.String(20), unique=True, nullable=False)
     lastname = db.Column(db.String(20), unique=True, nullable=False)
+    age = db.Column(db.String(10), unique=False, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
     def __repr__(self):
-        return f"User('{self.studentid}', '{self.firstname}', '{self.lastname}', '{self.email}')"
+        return f"User('{self.gender}', '{self.firstname}', '{self.lastname}', '{self.age}', '{self.email}')"
+
+class Exercise(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    learntype = db.Column(db.String(10), unique=False, nullable=False)
+    fullpoint = db.Column(db.String(10), unique=False, nullable=False)
+    getpoint = db.Column(db.String(10), unique=False, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
+    def __repr__(self):
+        return f"Exercise('{self.learntype}','{self.fullpoint}','{self.getpoint}')"
+
 
 def get_content():
     db.create_all()
