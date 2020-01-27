@@ -2,11 +2,12 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import glob
 import os
-
+from flask_bcrypt import Bcrypt
+from flask_login import UserMixin
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database/vark_db1.db'
 db = SQLAlchemy(app)
-
+bcrypt = Bcrypt(app)
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20), unique=True, nullable=False)
@@ -43,7 +44,18 @@ class Content(db.Model):
    
     def __repr__(self):
         return f"Content('{self.file_name}','{self.c_type}')"
-
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    gender = db.Column(db.String(10), unique=False, nullable=False)
+    firstname = db.Column(db.String(20), unique=False, nullable=False)
+    lastname = db.Column(db.String(20), unique=False, nullable=False)
+    age = db.Column(db.String(10), unique=False, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    user_type = db.Column(db.String(120), unique=False, nullable=False)
+    password = db.Column(db.String(60), nullable=False)
+    def __repr__(self):
+        return f"User('{self.gender}', '{self.firstname}', '{self.lastname}', '{self.age}', '{self.email}')"
+        
 def create_varkdb():
 
 # Table 1 Subject
@@ -169,6 +181,13 @@ def create_varkdb():
         index += 1
     
     print(Content.query.all())
+
+    # Table 5 User
+    hashed_password = bcrypt.generate_password_hash('Am-1234').decode('utf-8')
+    user = User(gender='M', firstname='Admin', 
+                lastname='Admin', age='21', email='vark_admin@gmail.com', password=hashed_password, user_type='Admin')
+    db.session.add(user)
+
     db.session.commit()
 
 def get_content():

@@ -45,10 +45,11 @@ class Content(db.Model):
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     gender = db.Column(db.String(10), unique=False, nullable=False)
-    firstname = db.Column(db.String(20), unique=True, nullable=False)
-    lastname = db.Column(db.String(20), unique=True, nullable=False)
+    firstname = db.Column(db.String(20), unique=False, nullable=False)
+    lastname = db.Column(db.String(20), unique=False, nullable=False)
     age = db.Column(db.String(10), unique=False, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
+    user_type = db.Column(db.String(120), unique=False, nullable=False)
     password = db.Column(db.String(60), nullable=False)
     def __repr__(self):
         return f"User('{self.gender}', '{self.firstname}', '{self.lastname}', '{self.age}', '{self.email}')"
@@ -58,6 +59,7 @@ class Exercise(db.Model):
     learntype = db.Column(db.String(10), unique=False, nullable=False)
     fullpoint = db.Column(db.String(10), unique=False, nullable=False)
     getpoint = db.Column(db.String(10), unique=False, nullable=False)
+    percent = db.Column(db.String(10), unique=False, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
     def __repr__(self):

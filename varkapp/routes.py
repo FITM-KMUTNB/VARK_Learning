@@ -7,7 +7,7 @@ import pdfplumber
 import glob
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
-#@login_required
+@login_required
 def index():
     chapter, topic, content = get_content()
     
@@ -23,7 +23,7 @@ def registration():
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         user = User(gender=form.gender.data, firstname=form.firstname.data, 
-                    lastname=form.lastname.data, age=form.age.data, email=form.email.data, password=hashed_password)
+                    lastname=form.lastname.data, age=form.age.data, email=form.email.data, password=hashed_password, user_type='User')
         db.session.add(user)
         db.session.commit()
         flash('Your account has been created! You are now able to log in', 'success')
@@ -51,10 +51,10 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-testfile = None
-chapterid = None
-topicid = None
-learntype = None
+testfile = dict()
+chapterid = dict()
+topicid = dict()
+learntype = dict()
 @app.route('/exercise/', methods=['GET', 'POST'])
 def exercise():
     global testfile
@@ -71,7 +71,7 @@ def exercise():
             select_choice.append(request.form['choice'+str(select)].replace(".",""))
         
         # get anwser file path
-        file_path = testfile.split("/")
+        file_path = testfile[current_user.email].split("/")
         del file_path[-1]
         answer_file = "varkapp/"
         for p in range(len(file_path)):
@@ -100,24 +100,40 @@ def exercise():
                 get_points += 1
         
         # commit to database
-        db_topicid = Topic.query.filter_by(chapter_id=chapterid, number=topicid).first().id
-        print(db_topicid)
+        db_topicid = Topic.query.filter_by(chapter_id=chapterid[current_user.email], number=topicid[current_user.email]).first().id
         userid = User.query.filter_by(email=current_user.email).first().id
-        try:
-            exerciseDB = Exercise.query.filter_by(user_id=userid, topic_id=topicid).first().id
-            print(exerciseDB)
-           
-        except:
-            if learntype == None:
-                learntype = "-"
-            exerciseDB = Exercise(learntype=learntype, fullpoint=full_point, getpoint=get_points, user_id=userid, topic_id=db_topicid)
+        
+        # Add to Exercise table
+        exerciseDB = Exercise.query.filter_by(user_id=userid, topic_id=db_topicid).first()
+        # if this exercise have done before --> update score
+        if exerciseDB:
+            print(exerciseDB, " : Exercise exist!")
+            percent = (get_points/full_point) * 100
+            exerciseDB.learntype = learntype[current_user.email]
+            exerciseDB.getpoint = get_points
+            exerciseDB.percent = percent
+            db.session.commit()
+            print("Update database.")
+            print(Exercise.query.filter_by(user_id=userid, topic_id=db_topicid).first())
+        # add new exercise score
+        else:
+            if learntype[current_user.email] == None:
+                learntype[current_user.email] = "-"
+            percent = (get_points/full_point) * 100
+            exerciseDB = Exercise(learntype=learntype[current_user.email], fullpoint=full_point, getpoint=get_points,percent=percent,\
+                                    user_id=userid, topic_id=db_topicid)
             db.session.add(exerciseDB)
             db.session.commit()
-            print("Create new")
+            print(Topic.query.filter_by(id=db_topicid).first(), " : Submit")
 
-        print(select_choice)
-        print(answer_choice)
-        print(get_points)
+        # Exercise Result
+     
+        print("User : ",  User.query.filter_by(email=current_user.email).first().firstname)
+        print("Select : ", select_choice)
+        print("Answer : ", answer_choice)
+        print("Learn type : ", learntype[current_user.email])
+        print("correct : ", get_points)
+
         return redirect(url_for('index'))
 
     # display excercise
@@ -132,14 +148,14 @@ def exercise():
                     q_number.append(str(num)+"."+str(num2)+"."+str(num3))
         
         # extract exercise file
-        testfile = request.args.get('testfile', default='', type=str)
+        testfile[current_user.email] = request.args.get('testfile', default='', type=str)
 
         # keep chapter id and topic id for query in database.
-        chapterid = request.args.get('chapterid', default='', type=str)
-        topicid = request.args.get('topicid', default='', type=str)
+        chapterid[current_user.email] = request.args.get('chapterid', default='', type=str)
+        topicid[current_user.email] = request.args.get('topicid', default='', type=str)
     
-        pdf = pdfplumber.open("varkapp/"+testfile)
-        print(testfile)
+        pdf = pdfplumber.open("varkapp/"+testfile[current_user.email])
+        print(testfile[current_user.email])
         text = []
         for page in range(0, len(pdf.pages)):
             pages = pdf.pages[page].extract_text().splitlines()
@@ -236,6 +252,6 @@ def exercise():
 @app.route('/learn_type', methods=['GET','POST'])
 def learn_type():
     global learntype
-    learntype = request.form['learntype']
-    response = "Learning type : "+str(learntype)
+    learntype[current_user.email] = request.form['learntype']
+    response = "Learning type : "+str(learntype[current_user.email])
     return jsonify({'response':response})
