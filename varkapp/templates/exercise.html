@@ -3,7 +3,7 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 <body>
    <div style="padding: 30px; margin-left: 40px;">
-    <form action="" method="POST">
+    <form action="{{ url_for('submit_exercise') }}"  method="POST">
     {% if content %}
         <h3> {{ title }} </h3>
         <hr>
@@ -29,7 +29,12 @@
         
     {% endif %}
         <input type="text" name="topic" value="{{quiz_number.value}}" hidden>
+        <input type="text" name="testfile" value="{{testfile}}" hidden>
+        <input type="text" name="topicid" value="{{topicid}}" hidden>
+        <input type="text" name="chapterid" value="{{chapterid}}" hidden>
+        <input type="text" name="learntype" value="{{learntype}}" hidden>
         <input type="text" name="quiz_number" value="{{quiz_number.value}}" hidden>
+
         <center><input type="submit" class="btn btn-outline-info" value="Submit"></center>
     </form>
     </div>

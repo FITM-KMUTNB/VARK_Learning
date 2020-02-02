@@ -13,7 +13,7 @@
         {% if current_user.is_authenticated %}
             
             <a href="{{ url_for('logout') }}" style="float:right;">Log out</a>
-            <a href=""  style="float:right;">{{ current_user.firstname }}</a>
+            <a href=""  style="float:right;">{{ current_user.firstname }} {{ current_user.lastname }}</a>
         {% else %}
             <a href="{{ url_for('login') }}" style="float:right;">Sign in</a>
         {% endif %}

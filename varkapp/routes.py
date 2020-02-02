@@ -10,7 +10,7 @@ import glob
 @login_required
 def index():
     chapter, topic, content = get_content()
-    
+
     return render_template('index.html', title = "VARK", chapter=chapter, topic=topic, content=content,\
     Exercise=Exercise, User=User, Topic=Topic)
 
@@ -51,93 +51,10 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-testfile = dict()
-chapterid = dict()
-topicid = dict()
-learntype = dict()
-@app.route('/exercise/', methods=['GET', 'POST'])
-def exercise():
-    global testfile
-    global topicid
-    global chapterid
-    global learntype
-    #receive answer from template
+@app.route('/display_exercise', methods=['GET', 'POST'])
+def display_exercise():
     if request.method == 'POST':
-
-        # get choice from template
-        quiz_number = request.form.get('quiz_number')
-        select_choice = []
-        for select in range(1, int(quiz_number)+1):
-            select_choice.append(request.form['choice'+str(select)].replace(".",""))
-        
-        # get anwser file path
-        file_path = testfile[current_user.email].split("/")
-        del file_path[-1]
-        answer_file = "varkapp/"
-        for p in range(len(file_path)):
-            answer_file += file_path[p]+"/"
-              
-        for file in glob.glob(answer_file+"/*.txt"):
-            answer_file = file
-
-        # read answer in text file
-        Text_file = open(answer_file, 'r')
-        answer_choice = []
-        for check_c in Text_file:
-            check_c = check_c.replace("\n","")
-      
-            if len(check_c.split()) > 1:
-                ans, topic = check_c.split()
-            else:
-                ans = check_c
-            answer_choice.append(ans)
-        
-        # check score
-        full_point = len(answer_choice)
-        get_points = 0
-        for ans in range(len(answer_choice)):
-            if select_choice[ans] == answer_choice[ans]:
-                get_points += 1
-        
-        # commit to database
-        db_topicid = Topic.query.filter_by(chapter_id=chapterid[current_user.email], number=topicid[current_user.email]).first().id
-        userid = User.query.filter_by(email=current_user.email).first().id
-        
-        # Add to Exercise table
-        exerciseDB = Exercise.query.filter_by(user_id=userid, topic_id=db_topicid).first()
-        # if this exercise have done before --> update score
-        if exerciseDB:
-            print(exerciseDB, " : Exercise exist!")
-            percent = (get_points/full_point) * 100
-            exerciseDB.learntype = learntype[current_user.email]
-            exerciseDB.getpoint = get_points
-            exerciseDB.percent = percent
-            db.session.commit()
-            print("Update database.")
-            print(Exercise.query.filter_by(user_id=userid, topic_id=db_topicid).first())
-        # add new exercise score
-        else:
-            if learntype[current_user.email] == None:
-                learntype[current_user.email] = "-"
-            percent = (get_points/full_point) * 100
-            exerciseDB = Exercise(learntype=learntype[current_user.email], fullpoint=full_point, getpoint=get_points,percent=percent,\
-                                    user_id=userid, topic_id=db_topicid)
-            db.session.add(exerciseDB)
-            db.session.commit()
-            print(Topic.query.filter_by(id=db_topicid).first(), " : Submit")
-
-        # Exercise Result
-     
-        print("User : ",  User.query.filter_by(email=current_user.email).first().firstname)
-        print("Select : ", select_choice)
-        print("Answer : ", answer_choice)
-        print("Learn type : ", learntype[current_user.email])
-        print("correct : ", get_points)
-
-        return redirect(url_for('index'))
-
-    # display excercise
-    else:
+        # display excercise
         # question number for check question line in text.
         q_number = []
         for num in range(1,20):
@@ -146,16 +63,17 @@ def exercise():
             for num2 in range(1,20):
                 for num3 in range(1,20):
                     q_number.append(str(num)+"."+str(num2)+"."+str(num3))
-        
+
         # extract exercise file
-        testfile[current_user.email] = request.args.get('testfile', default='', type=str)
+        testfile= request.form['testfile']
 
         # keep chapter id and topic id for query in database.
-        chapterid[current_user.email] = request.args.get('chapterid', default='', type=str)
-        topicid[current_user.email] = request.args.get('topicid', default='', type=str)
-    
-        pdf = pdfplumber.open("varkapp/"+testfile[current_user.email])
-        print(testfile[current_user.email])
+        chapterid = request.form['chapterid']
+        topicid = request.form['topicid']
+        learntype = request.form['learntype']
+
+        pdf = pdfplumber.open("varkapp/"+testfile)
+        print(testfile)
         text = []
         for page in range(0, len(pdf.pages)):
             pages = pdf.pages[page].extract_text().splitlines()
@@ -165,7 +83,7 @@ def exercise():
                 if '�' in line:
                     my_new_string = ""
                     cutt = line.split("�")
-                      
+                    
                     for index in range(len(cutt)):
                         if len(cutt[index]) > 0:
                             prev_char = len(cutt[index])
@@ -193,7 +111,7 @@ def exercise():
                     else:
                         text.append(my_new_string)
 
-                 # Remove "า" in case if "ำา" exist in line
+                # Remove "า" in case if "ำา" exist in line
                 elif  'า' in line:
                     cutt = line.split("า")
                     my_new_string = "" 
@@ -219,7 +137,7 @@ def exercise():
             choice = ""
             line_cutt = text[t].split("\t")
             line_cutt = ' '.join(line_cutt).split()
-          
+
             if line_cutt[0] in q_number:
                 question = ""
                 question += text[t]
@@ -229,29 +147,105 @@ def exercise():
                     if check_newline[0] not in ['ก.', 'ข.', 'ค.', 'ง.', 'ก', 'ข', 'ค', 'ง']:
                         question += '\n'+text[t+1]
                 exercise_content[question] = None
-               
+            
             elif line_cutt[0] in ['ก.', 'ข.', 'ค.', 'ง.', 'ก', 'ข', 'ค', 'ง',]:
                 for c in line_cutt[1:]:
                     choice += " "+c
-              
+            
                 if t+1 < len(text):
                     check_newline = text[t+1].split("\t")
                     check_newline = ' '.join(check_newline).split()
                     if check_newline[0] not in ['ก.', 'ข.', 'ค.', 'ง.', 'ก', 'ข', 'ค', 'ง'] and \
                     check_newline[0] not in q_number:
                         choice += '\n'+text[t+1]
-                      
+                    
                 tempt_choice[line_cutt[0]] = choice
-               
+            
                 if len(tempt_choice) == 4:
                     exercise_content[question] = tempt_choice
                     tempt_choice = dict()
-     
-        return render_template('exercise.html', content = exercise_content, title = text[0])
 
-@app.route('/learn_type', methods=['GET','POST'])
-def learn_type():
-    global learntype
-    learntype[current_user.email] = request.form['learntype']
-    response = "Learning type : "+str(learntype[current_user.email])
-    return jsonify({'response':response})
+        return render_template('exercise.html', content = exercise_content, title = text[0], testfile=testfile,\
+                                chapterid=chapterid, topicid=topicid, learntype=learntype)
+
+@app.route('/submit_exercise', methods=['GET', 'POST'])
+def submit_exercise():
+
+    #receive answer from template
+    if request.method == 'POST':
+        print("Submit")
+        # Request get from template
+        quiz_number = request.form.get('quiz_number')
+        testfile = request.form.get('testfile')
+        chapterid = request.form.get('chapterid')
+        topicid = request.form.get('topicid')
+        learntype = request.form.get('learntype')
+        if learntype == "":
+                learntype = "-"
+
+        select_choice = []
+        for select in range(1, int(quiz_number)+1):
+            select_choice.append(request.form['choice'+str(select)].replace(".",""))
+        
+        # get anwser file path
+        file_path = testfile.split("/")
+        del file_path[-1]
+        answer_file = "varkapp/"
+        for p in range(len(file_path)):
+            answer_file += file_path[p]+"/"
+            
+        for file in glob.glob(answer_file+"/*.txt"):
+            answer_file = file
+
+        # read answer in text file
+        Text_file = open(answer_file, 'r')
+        answer_choice = []
+        for check_c in Text_file:
+            check_c = check_c.replace("\n","")
+    
+            if len(check_c.split()) > 1:
+                ans, topic = check_c.split()
+            else:
+                ans = check_c
+            answer_choice.append(ans)
+        
+        # check score
+        full_point = len(answer_choice)
+        get_points = 0
+        for ans in range(len(answer_choice)):
+            if select_choice[ans] == answer_choice[ans]:
+                get_points += 1
+        
+        # commit to database
+        db_topicid = Topic.query.filter_by(chapter_id=chapterid, number=topicid).first().id
+        userid = User.query.filter_by(email=current_user.email).first().id
+        
+        # Add to Exercise table
+        exerciseDB = Exercise.query.filter_by(user_id=userid, topic_id=db_topicid).first()
+        # if this exercise have done before --> update score
+        if exerciseDB:
+            percent = (get_points/full_point) * 100
+            exerciseDB.learntype = learntype
+            exerciseDB.getpoint = get_points
+            exerciseDB.percent = percent
+            db.session.commit()
+            print("Update database.")
+            print(Exercise.query.filter_by(user_id=userid, topic_id=db_topicid).first())
+        # add new exercise score
+        else:
+            percent = (get_points/full_point) * 100
+            exerciseDB = Exercise(learntype=learntype, fullpoint=full_point, getpoint=get_points,percent=percent,\
+                                    user_id=userid, topic_id=db_topicid)
+            db.session.add(exerciseDB)
+            db.session.commit()
+            print(Topic.query.filter_by(id=db_topicid).first(), " : Submit")
+
+        # Exercise Result
+        print("############## Result ######################")
+        print("User : ",  User.query.filter_by(email=current_user.email).first().firstname)
+        print("Select : ", select_choice)
+        print("Answer : ", answer_choice)
+        print("Learn type : ", learntype)
+        print("correct : ", get_points)
+
+        return redirect(url_for('index'))

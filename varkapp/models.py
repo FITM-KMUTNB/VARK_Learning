@@ -17,7 +17,6 @@ class Chapter(db.Model):
     name = db.Column(db.String(20), nullable=False)
     number = db.Column(db.Integer, nullable=False)
     subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False)
-
     topics = db.relationship('Topic', backref='chapter', lazy=True)
 
     def __repr__(self):
@@ -63,7 +62,7 @@ class Exercise(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
     def __repr__(self):
-        return f"Exercise('{self.learntype}','{self.fullpoint}','{self.getpoint}')"
+        return f"Exercise('{self.learntype}','{self.fullpoint}','{self.getpoint}','{self.percent}','{self.user_id}')"
 
 
 def get_content():
@@ -81,15 +80,18 @@ def get_content():
             dict_top[t.number] = t.name
             dict_cont = dict()
             k = 1
+            kfile = dict()
             for ct in t.contents:
                 if ct.c_type == 'K':
-                    dict_cont[ct.c_type+str(k)] = ct.file_name
+                    kfile[ct.c_type+str(k)] = ct.file_name
                     k += 1
                 else:
+                    if kfile:
+                        dict_cont['K'] = kfile
                     dict_cont[ct.c_type] = ct.file_name
             contents.append(dict_cont)
                   
         topics.append(dict_top)
-
+  
     return chapters, topics, contents
 
