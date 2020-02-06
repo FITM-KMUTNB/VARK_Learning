@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- Content -->
+
+    {% set top_index = namespace(value=0) %}
+    {% set cont_index = namespace(value=0) %}
+
+    <!-- iterate Chapter-->
+    {% for cid, cname in chapter.items() %}
+    
+    <!-- Check chapter 2 down, disable that chapter if previous test not pass yet(score > 50%)-->
+    {% if cid > 1 %}
+        <!-- Test id of previous chapter -->
+        {% set prev_topic = Topic.query.filter_by(number='T', chapter_id=cid-1).first().id %}
+        <!-- Get User Test id -->
+        {% set prev_test = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=prev_topic).first() %}
+        
+        <!-- user exam exist in database(user have done the exam)  -->
+        {% if prev_test %}
+            <!-- Get User Test score -->
+            {% set prevtest_percent = prev_test.percent | int %}
+            <!-- If not pass previous chapter, disable the less chapter -->
+            {% if prevtest_percent < 50  %}
+                <div style="padding: 30px; pointer-events: none; cursor: default;opacity: .4;">
+            <!-- If pass previous chapter, enable current chapter -->
+            {% else %}
+                <div style="padding: 30px;">
+            {% endif %}
+        <!-- user not do the exam yet -->
+        {% else %}
+            <div style="padding: 30px; pointer-events: none; cursor: default;opacity: .4;">
+        {% endif %}
+    <!-- Enable Chapter 1-->
+    {% else %}
+    <div style="padding: 30px;">
+    {% endif %}
+
+    <!-- Chapter Name-->
+    <h3>{{ cname }}</h3>
+    <hr>
+    <div class="chapter-block">
+    <div style="margin-left: 50px;">
+        {% for tid, tname in topic[top_index.value].items() %}
+            <!-- Disable if it not pretest -->
+            {% if tid != 'P' %}
+                <!-- Get previous topic key -->
+                {% set topiclist = topic[top_index.value].keys() | list %}
+                {% set prevtopic_key = topiclist[topiclist.index(tid) - 1] %}
+                <!-- Get previous topic Record from database -->
+                {% set chprev_topic = Topic.query.filter_by(number=prevtopic_key, chapter_id=cid).first().id %}
+                <!-- Get previous topic exercise Record from database -->
+                {% set prev_exam = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=chprev_topic).first() %}
+                
+                <!--if previous exercise have done -->
+                {% if prev_exam %}
+                    <!-- If done pretest -->
+                    {% if prevtopic_key != 'P' %}
+                        <!--Previous exercise score -->
+                        {% set prevexam_percent = prev_exam.percent | int %}
+                        <!--If score is more that 50 %, unlock the next topic-->
+                        {% if prevexam_percent >= 50 %}
+                            <div>
+                        <!-- score < 50-->        
+                        {% else %}
+                            <div style="pointer-events: none; cursor: default;opacity: .4;">
+                        {% endif %}
+                    <!-- If done pretest unlock next topic without score-->
+                    {% else %}
+                        <div>
+                    {% endif %}
+                <!--if previous exercise not done yet -->
+                {% else %}
+                    <div style="pointer-events: none; cursor: default;opacity: .4;">
+                {% endif %}
+
+             <!-- Enable Pretest -->    
+            {% else %}
+                <div>
+            {% endif %}
+
+            <!-- Topic Name-->
+            {{ tid }}. {{ tname }}
+            &nbsp;&nbsp;
+            <!-- VARK, Pretest, Exercise, Test -->
+            {% for ctid, cinfo in content[cont_index.value].items() %}  
+            
+            {% if 'K' in ctid %}
+                <a href="#" onclick="openklist({{ cinfo }});">{{ ctid }}</a>
+                <!--<a href="javascript:openswf( '{{ cinfo }}' );"> {{ ctid }} </a>-->
+
+            {% elif 'P' == ctid %}
+                <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Pretest</a>
+            {% elif 'E' == ctid %}
+                <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Exercise</a>
+            {% elif 'T' == ctid %}
+                <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Test</a>
+            {% else %}
+                <a href="{{ cinfo }}" target="popup" onclick="window.open('{{ cinfo }}','popup','width=1000,height=800');learn_type('{{ ctid }}'); return false;"> {{ ctid }} </a>
+
+            {% endif %}
+            {% endfor %}
+            
+            &nbsp;&nbsp;
+            {% set get_topicDB = Topic.query.filter_by(number=tid, chapter_id=cid).first().id %}
+            {% set user_exercise = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).first() %}
+            {% if user_exercise %}
+                {% if tid != 'P' %}
+                    {% set percent_score = user_exercise.percent | int %}
+                    {% if percent_score >= 80 %}
+                        <font color="#4ce400"><b>{{ percent_score }} %</b></font> 
+                        <span style=" color: rgb(0, 175, 29); font-size:20px;">&#10004;</span>
+                    {% elif (percent_score >= 50) and (percent_score < 80) %}
+                        <font color="#ffe319"><b>{{ percent_score }} % </b></font> 
+                        <span style=" color: rgb(0, 175, 29); font-size:20px;">&#10004;</span>
+                    {% else %}
+                        <font color="red"><b>{{ percent_score }} % </b></font>
+                        <span style=" color: rgb(228, 1, 1); font-size:20px;">&#10008;</span>
+                    {% endif %}
+                {% else %}
+                    <span style=" color: rgb(0, 175, 29); font-size:20px;">&#10004;</span>
+                {% endif %}
+            
+            {% endif %}
+
+            {% set cont_index.value = cont_index.value + 1 %}
+            </div>
+        {% endfor %}
+        {% set top_index.value = top_index.value + 1 %}
+    </div>
+    </div>
+    </div>
+        
+    {% endfor %}
+
+
+<script>
+
+//open flash file(.swf)
+function openswf (kpart){
+    console.log("GASDD")
+    window.open(kpart, "popwindow","resizable=no,menubar=no,directories=no,status=no,location=no,scrollbars=yes,width=1000,height=800");
+}
+
+var learntype="";
+// Click VARK and keep which type that user have clicked
+function learn_type(type){
+    learntype = type
+
+/*  
+    $.ajax({
+        url: "/learn_type",
+        type: "post", //send it through get method
+        data:{'learntype': type},
+        
+    })
+    .done(function(data){
+        if(data.error){
+            console.log("Error")
+        }
+        else{
+            console.log(data.response)
+        }
+
+    });
+*/
+}
+
+
+function Examination(testfile, chapterid, topicid){
+   
+    $.ajax({
+            url: "/display_exercise",
+            type: "post", //send it through get method
+            data:{
+                'testfile': testfile,
+                'chapterid':chapterid,
+                'topicid':topicid,
+                'learntype':learntype
+
+            },
+            dataType: 'html',
+            success:function(response){document.write(response); learntype="";}
+        
+    })
+}
+
+function openklist( kfile ){
+    learntype = 'K'
+    var win = window.open('', '',"toolbar=no, width=600, height=400");
+    var doc = win.document.open();
+    doc.write('<title>K Learning</title>');
+    var part = 1;
+    for (k in kfile) {
+        
+        doc.write('<a href="javascript:opener.openswf(\''+kfile[k]+'\');"> Part'+part+'</a><br>');
+        part++;
+    }
+    
+    doc.close();
+}
+</script>
+{% endblock content%}

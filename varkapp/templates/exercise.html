@@ -1,0 +1,43 @@
+<html>
+    <meta charset="ISO-8859-1">  
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<body>
+   <div style="padding: 30px; margin-left: 40px;">
+    <form action="{{ url_for('submit_exercise') }}"  method="POST">
+    {% if content %}
+        <h3> {{ title }} </h3>
+        <hr>
+        
+        {% set quiz_number = namespace(value=0) %}
+        {% for question in content %}  
+           
+            <div>
+                {{ question }}
+                {% set quiz_number.value = quiz_number.value + 1 %}
+            </div>
+            <br>
+            {% for choice in content[question] %}  
+            <div style="margin-left: 30px;">
+                <input type="radio" name="choice{{quiz_number.value}}" value="{{ choice }}" required>  
+                &nbsp;  {{ choice }} {{content[question][choice]}}
+                <br>
+            </div>
+       
+           <br>   
+           {% endfor %}
+        {% endfor %}
+        
+    {% endif %}
+        <input type="text" name="topic" value="{{quiz_number.value}}" hidden>
+        <input type="text" name="testfile" value="{{testfile}}" hidden>
+        <input type="text" name="topicid" value="{{topicid}}" hidden>
+        <input type="text" name="chapterid" value="{{chapterid}}" hidden>
+        <input type="text" name="learntype" value="{{learntype}}" hidden>
+        <input type="text" name="quiz_number" value="{{quiz_number.value}}" hidden>
+
+        <center><input type="submit" class="btn btn-outline-info" value="Submit"></center>
+    </form>
+    </div>
+</body>
+   
+</html>
