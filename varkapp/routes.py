@@ -9,10 +9,78 @@ import glob
 @app.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
-    chapter, topic, content = get_content()
+    chapter, topic, content = get_content() 
+    userid = User.query.filter_by(email=current_user.email).first().id
+    exerciseDB = Exercise.query.filter_by(user_id=userid).all()
+    chapter_sum = dict()
+    allchapter_varkscore = dict()
+    for cid in chapter:
+        vark_chapter = dict()
+        #print("Chapter :", cid)
+        for tobj in Topic.query.filter_by(chapter_id=cid).all():
+            exercise_list = Exercise.query.filter_by(user_id=userid, topic_id=tobj.id).all()
+            if exercise_list:
+                #print("Topic : ",tobj.number)
+                for exobj in exercise_list:
+                    if tobj.number != "P" and tobj.number != "T" :
+                        if exobj.learntype == "-":
+                            continue
+                        if exobj.learntype not in vark_chapter:
+                            vark_chapter[exobj.learntype] = [int(exobj.getpoint), int(exobj.fullpoint)]
+                        else:
+                            plusscore = vark_chapter[exobj.learntype][0] + int(exobj.getpoint)
+                            allscore = vark_chapter[exobj.learntype][1] + int(exobj.fullpoint)
+                            vark_chapter[exobj.learntype] = [plusscore, allscore]
+                        #print(exobj.learntype, " : ", exobj.getpoint, "/", exobj.fullpoint)
+                        #print(vark_chapter)
+                    elif tobj.number == "T":
+                        chapter_percent = dict()
+                        # more that chapter 1, calculate sum of vark from chapter1 to current chapter.
+                        if cid > 1:
+                            vark_score = dict()
+                            allchapter_varkscore[cid] = vark_chapter
+                            for prevch in allchapter_varkscore:
+                                for vark in allchapter_varkscore[prevch]:
+                                    if vark not in vark_score:
+                                        topic_getpoint = allchapter_varkscore[prevch][vark][0]
+                                        topic_fullpoint = allchapter_varkscore[prevch][vark][1]
+                                        vark_score[vark] = [topic_getpoint, topic_fullpoint]
+                                    else:
+                                        topic_getpoint = allchapter_varkscore[prevch][vark][0]
+                                        topic_fullpoint = allchapter_varkscore[prevch][vark][1]
+                                        topic_pluspoint = vark_score[vark][0] + topic_getpoint
+                                        topic_plusfull = vark_score[vark][1] + topic_fullpoint
+                                        vark_score[vark] = [topic_pluspoint, topic_plusfull]
 
+                            for vark in vark_score:
+                                percent = ( vark_score[vark][0]/ vark_score[vark][1])*100
+                                #print(vark," : ",percent, " %")
+                                chapter_percent[vark] = int(percent)
+                            chapter_sum[cid] = chapter_percent
+
+                        #chapter 1 vark percent
+                        else:
+                            for vark in vark_chapter:
+                                percent = ( vark_chapter[vark][0]/ vark_chapter[vark][1])*100
+                                #print(vark," : ",percent, " %")
+                                chapter_percent[vark] = int(percent)
+                            allchapter_varkscore[cid] = vark_chapter
+                            chapter_sum[cid] = chapter_percent
+    # [getpoint, fullpoint]                        
+    # {1: {'V': [3, 10], 'A': [0, 10], 'R': [13, 20], 'K': [0, 5]}, 2: {'R': [3, 5], 'V': [2, 5], 'A': [4, 5]}}
+    print(allchapter_varkscore)
+
+    # vark percent of each chapters
+    print(chapter_sum)           
+    """
+    for ex in exerciseDB:
+        db_topic = Topic.query.filter_by(id=ex.topic_id).first()
+        print('Chapter : ', db_topic.chapter_id)
+        topic_vark_score = Exercise.query.filter_by(user_id=userid, topic_id = ex.topic_id).all()
+        for vark in topic_vark_score:
+            print(vark.learntype, " : ", vark.getpoint, "/", vark.fullpoint)"""
     return render_template('index.html', title = "VARK", chapter=chapter, topic=topic, content=content,\
-    Exercise=Exercise, User=User, Topic=Topic)
+    Exercise=Exercise, User=User, Topic=Topic, chapter_sum = chapter_sum)
 
 @app.route('/registration', methods=['GET', 'POST'])
 def registration():
@@ -198,15 +266,17 @@ def submit_exercise():
             answer_file = file
 
         # read answer in text file
-        Text_file = open(answer_file, 'r')
+        Text_file = open(answer_file, 'r', encoding='utf-8-sig')
         answer_choice = []
         for check_c in Text_file:
+            
             check_c = check_c.replace("\n","")
-    
+         
             if len(check_c.split()) > 1:
                 ans, topic = check_c.split()
             else:
                 ans = check_c
+            print(ans)
             answer_choice.append(ans)
         
         # check score
@@ -224,13 +294,28 @@ def submit_exercise():
         exerciseDB = Exercise.query.filter_by(user_id=userid, topic_id=db_topicid).first()
         # if this exercise have done before --> update score
         if exerciseDB:
-            percent = (get_points/full_point) * 100
-            exerciseDB.learntype = learntype
-            exerciseDB.getpoint = get_points
-            exerciseDB.percent = percent
-            db.session.commit()
-            print("Update database.")
-            print(Exercise.query.filter_by(user_id=userid, topic_id=db_topicid).first())
+            exercis_topic = Exercise.query.filter_by(user_id=userid, topic_id=db_topicid).all()
+            update_score = False
+            for ext in exercis_topic:
+                if ext.learntype == learntype:
+                    update_score = True
+
+            if update_score:
+                percent = (get_points/full_point) * 100
+                exerciseDB.learntype = learntype
+                exerciseDB.getpoint = get_points
+                exerciseDB.percent = percent
+                db.session.commit()
+                print("Update database.")
+                print(Exercise.query.filter_by(user_id=userid, topic_id=db_topicid).first())
+            else:
+                percent = (get_points/full_point) * 100
+                exerciseDB = Exercise(learntype=learntype, fullpoint=full_point, getpoint=get_points,percent=percent,\
+                                        user_id=userid, topic_id=db_topicid)
+                db.session.add(exerciseDB)
+                db.session.commit()
+                print(Topic.query.filter_by(id=db_topicid).first(), " : Submit")
+
         # add new exercise score
         else:
             percent = (get_points/full_point) * 100

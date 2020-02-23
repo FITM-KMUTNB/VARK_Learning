@@ -49,16 +49,23 @@
                 <!-- Get previous topic Record from database -->
                 {% set chprev_topic = Topic.query.filter_by(number=prevtopic_key, chapter_id=cid).first().id %}
                 <!-- Get previous topic exercise Record from database -->
-                {% set prev_exam = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=chprev_topic).first() %}
+                {% set prev_exam = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=chprev_topic).all() %}
                 
                 <!--if previous exercise have done -->
                 {% if prev_exam %}
+                    {% set max_score = namespace(value=0) %}
+                        {% for score in prev_exam %}
+                        
+                            {% set iscore = score.percent | int %}
+                        
+                            {% if iscore > max_score.value %}
+                                {% set  max_score.value = iscore %}
+                            {%endif%}
+                    {%endfor%}
                     <!-- If done pretest -->
                     {% if prevtopic_key != 'P' %}
-                        <!--Previous exercise score -->
-                        {% set prevexam_percent = prev_exam.percent | int %}
                         <!--If score is more that 50 %, unlock the next topic-->
-                        {% if prevexam_percent >= 50 %}
+                        {% if max_score.value >= 50 %}
                             <div>
                         <!-- score < 50-->        
                         {% else %}
@@ -77,7 +84,11 @@
             {% else %}
                 <div>
             {% endif %}
-
+            
+            <!-- User exercise info variable -->
+            {% set get_topicDB = Topic.query.filter_by(number=tid, chapter_id=cid).first().id %}
+            {% set user_exercise = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).first() %}
+            
             <!-- Topic Name-->
             {{ tid }}. {{ tname }}
             &nbsp;&nbsp;
@@ -85,39 +96,167 @@
             {% for ctid, cinfo in content[cont_index.value].items() %}  
             
             {% if 'K' in ctid %}
-                <a href="#" onclick="openklist({{ cinfo }});">{{ ctid }}</a>
+                <!-- if pass, disable link -->
+                {% if user_exercise %}
+
+                <!-- Find vark high score to check if pass or not -->
+                {% set exercis_all = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).all() %}
+                {% set max_score = namespace(value=0) %}
+                {% for score in exercis_all %}
+                    
+                    {% set iscore = score.percent | int %}
+                    
+                    {% if iscore > max_score.value %}
+                        {% set  max_score.value = iscore %}
+                    {%endif%}
+                {%endfor%}
+                
+                <!-- If high score more than 50 % -->
+                {% set percent_score = user_exercise.percent | int %}
+                {% if max_score.value  >= 50 %}
+                    <a style="color:rgb(35, 230, 9);"> {{ ctid }} </a>
+                {% else %}
+                    <a href="#" onclick="openklist({{ cinfo }});">{{ ctid }}</a>
+                {% endif %}
+                {% else %}
+                    <a href="#" onclick="openklist({{ cinfo }});">{{ ctid }}</a>
+                {% endif %}
+                
                 <!--<a href="javascript:openswf( '{{ cinfo }}' );"> {{ ctid }} </a>-->
+            
 
             {% elif 'P' == ctid %}
-                <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Pretest</a>
+                <!-- if done, disable link -->
+                {% if user_exercise %}
+                    <a style="color:rgb(35, 230, 9);">Pretest</a>
+                    
+                {% else %}
+                    <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Pretest</a>
+                {% endif %}
+
             {% elif 'E' == ctid %}
-                <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Exercise</a>
+                <!-- if pass, disable link -->
+                {% if user_exercise %}
+
+                    <!-- Find vark high score to check if pass or not -->
+                    {% set exercis_all = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).all() %}
+                    {% set max_score = namespace(value=0) %}
+                    {% for score in exercis_all %}
+                        
+                        {% set iscore = score.percent | int %}
+                        
+                        {% if iscore > max_score.value %}
+                            {% set  max_score.value = iscore %}
+                        {%endif%}
+                    {%endfor%}
+                    
+                     <!-- If high score more than 50 % -->
+                    {% set percent_score = user_exercise.percent | int %}
+                    {% if max_score.value  >= 50 %}
+                        <a style="color:rgb(35, 230, 9);"> Exercise</a>
+                        
+                    {% else %}
+                        <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Exercise</a>
+                    {% endif %}
+                {% else %}
+                    <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Exercise</a>
+                {% endif %}
             {% elif 'T' == ctid %}
-                <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Test</a>
+                <!-- if pass, disable link -->
+                {% if user_exercise %}
+                    {% set percent_score = user_exercise.percent | int %}
+                    {% if percent_score >= 50 %}
+                        <a style="color:rgb(35, 230, 9);"> Test</a>
+                    {% else %}
+                        <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Test</a>
+                    {% endif %}
+                {% else %}
+                    <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Test</a>
+                {% endif %}
+                
             {% else %}
-                <a href="{{ cinfo }}" target="popup" onclick="window.open('{{ cinfo }}','popup','width=1000,height=800');learn_type('{{ ctid }}'); return false;"> {{ ctid }} </a>
+              <!-- if pass, disable link -->
+              {% if user_exercise %}
+
+                <!-- Find vark high score to check if pass or not -->
+                {% set exercis_all = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).all() %}
+                {% set max_score = namespace(value=0) %}
+                {% for score in exercis_all %}
+                    
+                    {% set iscore = score.percent | int %}
+                    
+                    {% if iscore > max_score.value %}
+                        {% set  max_score.value = iscore %}
+                    {%endif%}
+                {%endfor%}
+                
+                <!-- If high score more than 50 % -->
+                {% set percent_score = user_exercise.percent | int %}
+                {% if max_score.value  >= 50 %}
+                    <a style="color:rgb(35, 230, 9);"> {{ ctid }} </a>
+                {% else %}
+                    <a href="{{ cinfo }}" target="popup" onclick="window.open('{{ cinfo }}','popup','width=1000,height=800');learn_type('{{ ctid }}'); return false;"> {{ ctid }} </a>
+                {% endif %}
+                {% else %}
+                    <a href="{{ cinfo }}" target="popup" onclick="window.open('{{ cinfo }}','popup','width=1000,height=800');learn_type('{{ ctid }}'); return false;"> {{ ctid }} </a>
+                {% endif %}
+                
 
             {% endif %}
             {% endfor %}
             
             &nbsp;&nbsp;
-            {% set get_topicDB = Topic.query.filter_by(number=tid, chapter_id=cid).first().id %}
-            {% set user_exercise = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).first() %}
+           
+            <!-- Mark exercise result -->
             {% if user_exercise %}
-                {% if tid != 'P' %}
-                    {% set percent_score = user_exercise.percent | int %}
-                    {% if percent_score >= 80 %}
-                        <font color="#4ce400"><b>{{ percent_score }} %</b></font> 
+                {% if tid != 'P' and tid != 'T'%}
+                    {% set exercis_all = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).all() %}
+                    {% set max_score = namespace(value=0) %}
+                    <!-- Show vark score of topic -->
+                    {% for score in exercis_all %}
+                        {% if score.percent |int >= 80 %}
+                            <font color="#4ce400"><b>{{score.learntype}} {{score.percent | int}}%</b></font> 
+                        {% elif (score.percent |int >= 50) and (score.percent |int < 80) %}
+                            <font color="#ffe319"><b>{{score.learntype}} {{score.percent | int}}%</b></font>
+                        {% else %}
+                            <font color="red"><b>{{score.learntype}} {{score.percent | int}}%</b></font>
+                        {% endif %} 
+
+                        {% set iscore = score.percent | int %}
+                        {% if iscore > max_score.value %}
+                            {% set  max_score.value = iscore %}
+                        {%endif%}
+                    {%endfor%}
+
+                    <!-- Mark symbol -->
+                    {% if max_score.value  >= 80 %}
                         <span style=" color: rgb(0, 175, 29); font-size:20px;">&#10004;</span>
-                    {% elif (percent_score >= 50) and (percent_score < 80) %}
-                        <font color="#ffe319"><b>{{ percent_score }} % </b></font> 
+                    {% elif (max_score.value  >= 50) and (max_score.value  < 80) %}
                         <span style=" color: rgb(0, 175, 29); font-size:20px;">&#10004;</span>
                     {% else %}
-                        <font color="red"><b>{{ percent_score }} % </b></font>
                         <span style=" color: rgb(228, 1, 1); font-size:20px;">&#10008;</span>
                     {% endif %}
                 {% else %}
-                    <span style=" color: rgb(0, 175, 29); font-size:20px;">&#10004;</span>
+                
+                    {% set exercis_all = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).all() %}
+                    {% set max_score = namespace(value=0) %}
+                    {% for score in exercis_all %}
+                        {% set iscore = score.percent | int %}
+                        {% if iscore > max_score.value %}
+                            {% set  max_score.value = iscore %}
+                        {%endif%}
+                    {%endfor%}
+                    {% if max_score.value |int >= 80 %}
+                        <font color="#4ce400"><b>{{max_score.value | int}}  %</b></font> 
+                        <span style=" color: rgb(0, 175, 29); font-size:20px;">&#10004;</span>
+                    {% elif (max_score.value |int >= 50) and (max_score.value |int < 80) %}
+                        <font color="#ffe319"><b>{{max_score.value | int}}  %</b></font>
+                        <span style=" color: rgb(0, 175, 29); font-size:20px;">&#10004;</span>
+                    {% else %}
+                        <font color="red"><b>{{max_score.value | int}}  %</b></font>
+                        <span style=" color: rgb(228, 1, 1); font-size:20px;">&#10008;</span>
+                    {% endif %} 
+                    
                 {% endif %}
             
             {% endif %}
@@ -128,8 +267,23 @@
         {% set top_index.value = top_index.value + 1 %}
     </div>
     </div>
+    {% if chapter_sum[cid] %}
+    <div style="margin-left: 60px;">
+        <b>Result</b>
+        {% for vark in chapter_sum[cid] %}
+            {% if chapter_sum[cid][vark] |int >= 80 %}
+                <font color="#4ce400"><b>{{ vark }} {{ chapter_sum[cid][vark] }}%</b></font> 
+            {% elif (chapter_sum[cid][vark] |int >= 50) and (chapter_sum[cid][vark] |int < 80) %}
+                <font color="#ffe319"><b>{{ vark }} {{ chapter_sum[cid][vark] }}%</b></font>
+            {% else %}
+                <font color="red"><b>{{ vark }} {{ chapter_sum[cid][vark] }}%</b></font>
+            {% endif %} 
+            &nbsp;&nbsp;
+        {% endfor %}
     </div>
-        
+    {% endif %}
+    </div>
+    
     {% endfor %}
 
 

@@ -30,7 +30,7 @@ class Topic(db.Model):
     contents = db.relationship('Content', backref='topic', lazy=True)
 
     def __repr__(self):
-        return f"Topic('{self.name}', '{self.number}')"
+        return f"Topic('{self.name}', '{self.chapter_id}', '{self.number}')"
 
 class Content(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -62,7 +62,7 @@ class Exercise(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
     def __repr__(self):
-        return f"Exercise('{self.learntype}','{self.fullpoint}','{self.getpoint}','{self.percent}','{self.user_id}')"
+        return f"Exercise('{self.topic_id}','{self.learntype}','{self.fullpoint}','{self.getpoint}','{self.percent}','{self.user_id}')"
 
 
 def get_content():
