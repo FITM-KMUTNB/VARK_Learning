@@ -34,44 +34,46 @@ def index():
                         #print(exobj.learntype, " : ", exobj.getpoint, "/", exobj.fullpoint)
                         #print(vark_chapter)
                     elif tobj.number == "T":
-                        chapter_percent = dict()
-                        # more that chapter 1, calculate sum of vark from chapter1 to current chapter.
-                        if cid > 1:
-                            vark_score = dict()
-                            allchapter_varkscore[cid] = vark_chapter
-                            for prevch in allchapter_varkscore:
-                                for vark in allchapter_varkscore[prevch]:
-                                    if vark not in vark_score:
-                                        topic_getpoint = allchapter_varkscore[prevch][vark][0]
-                                        topic_fullpoint = allchapter_varkscore[prevch][vark][1]
-                                        vark_score[vark] = [topic_getpoint, topic_fullpoint]
-                                    else:
-                                        topic_getpoint = allchapter_varkscore[prevch][vark][0]
-                                        topic_fullpoint = allchapter_varkscore[prevch][vark][1]
-                                        topic_pluspoint = vark_score[vark][0] + topic_getpoint
-                                        topic_plusfull = vark_score[vark][1] + topic_fullpoint
-                                        vark_score[vark] = [topic_pluspoint, topic_plusfull]
+                        test_past = (int(exobj.getpoint)/int(exobj.fullpoint))*100
+                        if test_past >= 50:
+                            chapter_percent = dict()
+                            # more that chapter 1, calculate sum of vark from chapter1 to current chapter.
+                            if cid > 1:
+                                vark_score = dict()
+                                allchapter_varkscore[cid] = vark_chapter
+                                for prevch in allchapter_varkscore:
+                                    for vark in allchapter_varkscore[prevch]:
+                                        if vark not in vark_score:
+                                            topic_getpoint = allchapter_varkscore[prevch][vark][0]
+                                            topic_fullpoint = allchapter_varkscore[prevch][vark][1]
+                                            vark_score[vark] = [topic_getpoint, topic_fullpoint]
+                                        else:
+                                            topic_getpoint = allchapter_varkscore[prevch][vark][0]
+                                            topic_fullpoint = allchapter_varkscore[prevch][vark][1]
+                                            topic_pluspoint = vark_score[vark][0] + topic_getpoint
+                                            topic_plusfull = vark_score[vark][1] + topic_fullpoint
+                                            vark_score[vark] = [topic_pluspoint, topic_plusfull]
 
-                            for vark in vark_score:
-                                percent = ( vark_score[vark][0]/ vark_score[vark][1])*100
-                                #print(vark," : ",percent, " %")
-                                chapter_percent[vark] = int(percent)
-                            chapter_sum[cid] = chapter_percent
+                                for vark in vark_score:
+                                    percent = ( vark_score[vark][0]/ vark_score[vark][1])*100
+                                    #print(vark," : ",percent, " %")
+                                    chapter_percent[vark] = int(percent)
+                                chapter_sum[cid] = chapter_percent
 
-                        #chapter 1 vark percent
-                        else:
-                            for vark in vark_chapter:
-                                percent = ( vark_chapter[vark][0]/ vark_chapter[vark][1])*100
-                                #print(vark," : ",percent, " %")
-                                chapter_percent[vark] = int(percent)
-                            allchapter_varkscore[cid] = vark_chapter
-                            chapter_sum[cid] = chapter_percent
+                            #chapter 1 vark percent
+                            else:
+                                for vark in vark_chapter:
+                                    percent = ( vark_chapter[vark][0]/ vark_chapter[vark][1])*100
+                                    #print(vark," : ",percent, " %")
+                                    chapter_percent[vark] = int(percent)
+                                allchapter_varkscore[cid] = vark_chapter
+                                chapter_sum[cid] = chapter_percent
     # [getpoint, fullpoint]                        
     # {1: {'V': [3, 10], 'A': [0, 10], 'R': [13, 20], 'K': [0, 5]}, 2: {'R': [3, 5], 'V': [2, 5], 'A': [4, 5]}}
-    print(allchapter_varkscore)
+    #print(allchapter_varkscore)
 
     # vark percent of each chapters
-    print(chapter_sum)           
+    #print(chapter_sum)           
     """
     for ex in exerciseDB:
         db_topic = Topic.query.filter_by(id=ex.topic_id).first()
@@ -326,11 +328,11 @@ def submit_exercise():
             print(Topic.query.filter_by(id=db_topicid).first(), " : Submit")
 
         # Exercise Result
-        print("############## Result ######################")
-        print("User : ",  User.query.filter_by(email=current_user.email).first().firstname)
-        print("Select : ", select_choice)
-        print("Answer : ", answer_choice)
-        print("Learn type : ", learntype)
-        print("correct : ", get_points)
+        #print("############## Result ######################")
+        #print("User : ",  User.query.filter_by(email=current_user.email).first().firstname)
+        #print("Select : ", select_choice)
+        #print("Answer : ", answer_choice)
+        #print("Learn type : ", learntype)
+        #print("correct : ", get_points)
 
         return redirect(url_for('index'))

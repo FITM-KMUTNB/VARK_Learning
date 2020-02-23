@@ -110,3 +110,8 @@ button {
 button:hover {
   opacity: 0.8;
 }
+.disabled{
+  pointer-events: none;
+  cursor: default;
+  opacity: 0.5;
+}

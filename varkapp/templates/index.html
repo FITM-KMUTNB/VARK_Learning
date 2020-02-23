@@ -4,7 +4,8 @@
 
     {% set top_index = namespace(value=0) %}
     {% set cont_index = namespace(value=0) %}
-
+    
+    {% set topicnumber = namespace(value=0) %}
     <!-- iterate Chapter-->
     {% for cid, cname in chapter.items() %}
     
@@ -96,34 +97,9 @@
             {% for ctid, cinfo in content[cont_index.value].items() %}  
             
             {% if 'K' in ctid %}
-                <!-- if pass, disable link -->
-                {% if user_exercise %}
-
-                <!-- Find vark high score to check if pass or not -->
-                {% set exercis_all = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).all() %}
-                {% set max_score = namespace(value=0) %}
-                {% for score in exercis_all %}
-                    
-                    {% set iscore = score.percent | int %}
-                    
-                    {% if iscore > max_score.value %}
-                        {% set  max_score.value = iscore %}
-                    {%endif%}
-                {%endfor%}
-                
-                <!-- If high score more than 50 % -->
-                {% set percent_score = user_exercise.percent | int %}
-                {% if max_score.value  >= 50 %}
-                    <a style="color:rgb(35, 230, 9);"> {{ ctid }} </a>
-                {% else %}
-                    <a href="#" onclick="openklist({{ cinfo }});">{{ ctid }}</a>
-                {% endif %}
-                {% else %}
-                    <a href="#" onclick="openklist({{ cinfo }});">{{ ctid }}</a>
-                {% endif %}
-                
-                <!--<a href="javascript:openswf( '{{ cinfo }}' );"> {{ ctid }} </a>-->
-            
+               
+                <a href="#" onclick="openklist({{ cinfo }});enable_exercise('{{topicnumber.value}}');">{{ ctid }}</a>
+           
 
             {% elif 'P' == ctid %}
                 <!-- if done, disable link -->
@@ -135,32 +111,11 @@
                 {% endif %}
 
             {% elif 'E' == ctid %}
-                <!-- if pass, disable link -->
-                {% if user_exercise %}
-
-                    <!-- Find vark high score to check if pass or not -->
-                    {% set exercis_all = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).all() %}
-                    {% set max_score = namespace(value=0) %}
-                    {% for score in exercis_all %}
-                        
-                        {% set iscore = score.percent | int %}
-                        
-                        {% if iscore > max_score.value %}
-                            {% set  max_score.value = iscore %}
-                        {%endif%}
-                    {%endfor%}
-                    
-                     <!-- If high score more than 50 % -->
-                    {% set percent_score = user_exercise.percent | int %}
-                    {% if max_score.value  >= 50 %}
-                        <a style="color:rgb(35, 230, 9);"> Exercise</a>
-                        
-                    {% else %}
-                        <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Exercise</a>
-                    {% endif %}
-                {% else %}
-                    <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Exercise</a>
-                {% endif %}
+            
+            
+                <a href="#" name="e{{topicnumber.value}}" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Exercise</a>
+                 
+                {% set topicnumber.value = topicnumber.value+1 %}
             {% elif 'T' == ctid %}
                 <!-- if pass, disable link -->
                 {% if user_exercise %}
@@ -175,31 +130,10 @@
                 {% endif %}
                 
             {% else %}
-              <!-- if pass, disable link -->
-              {% if user_exercise %}
-
-                <!-- Find vark high score to check if pass or not -->
-                {% set exercis_all = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).all() %}
-                {% set max_score = namespace(value=0) %}
-                {% for score in exercis_all %}
-                    
-                    {% set iscore = score.percent | int %}
-                    
-                    {% if iscore > max_score.value %}
-                        {% set  max_score.value = iscore %}
-                    {%endif%}
-                {%endfor%}
-                
-                <!-- If high score more than 50 % -->
-                {% set percent_score = user_exercise.percent | int %}
-                {% if max_score.value  >= 50 %}
-                    <a style="color:rgb(35, 230, 9);"> {{ ctid }} </a>
-                {% else %}
-                    <a href="{{ cinfo }}" target="popup" onclick="window.open('{{ cinfo }}','popup','width=1000,height=800');learn_type('{{ ctid }}'); return false;"> {{ ctid }} </a>
-                {% endif %}
-                {% else %}
-                    <a href="{{ cinfo }}" target="popup" onclick="window.open('{{ cinfo }}','popup','width=1000,height=800');learn_type('{{ ctid }}'); return false;"> {{ ctid }} </a>
-                {% endif %}
+            
+              
+                <a href="{{ cinfo }}" target="popup" onclick="window.open('{{ cinfo }}','popup','width=1000,height=800');learn_type('{{ ctid }}');enable_exercise('{{topicnumber.value}}'); return false;"> {{ ctid }} </a>
+           
                 
 
             {% endif %}
@@ -321,7 +255,7 @@ function learn_type(type){
 
 
 function Examination(testfile, chapterid, topicid){
-   
+    disable_exercise()
     $.ajax({
             url: "/display_exercise",
             type: "post", //send it through get method
@@ -352,5 +286,18 @@ function openklist( kfile ){
     
     doc.close();
 }
+
+function disable_exercise(){
+    for(i = 0;i<25;i++){
+        var el=document.getElementsByName('e'+i)
+        el[0].classList.add('disabled');
+    }
+}
+function enable_exercise(number){
+    var el=document.getElementsByName('e'+number)
+    el[0].classList.remove('disabled');
+    
+}
+disable_exercise()
 </script>
 {% endblock content%}
