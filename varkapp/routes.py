@@ -243,7 +243,7 @@ def submit_exercise():
 
     #receive answer from template
     if request.method == 'POST':
-        print("Submit")
+        #print("Submit")
         # Request get from template
         quiz_number = request.form.get('quiz_number')
         testfile = request.form.get('testfile')
@@ -268,7 +268,8 @@ def submit_exercise():
             answer_file = file
 
         # read answer in text file
-        Text_file = open(answer_file, 'r', encoding='utf-8-sig')
+        #Text_file = open(answer_file, 'r', encoding='utf-8-sig')
+        Text_file = open(answer_file, 'r', encoding='utf-8')
         answer_choice = []
         for check_c in Text_file:
             
@@ -278,7 +279,7 @@ def submit_exercise():
                 ans, topic = check_c.split()
             else:
                 ans = check_c
-            print(ans)
+            #print(ans)
             answer_choice.append(ans)
         
         # check score
