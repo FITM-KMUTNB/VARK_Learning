@@ -1,12 +1,13 @@
-from flask import render_template, url_for, request, flash, redirect, jsonify
+from flask import render_template, url_for, request, flash, redirect, jsonify, send_file
 from varkapp import app, db, bcrypt
 from varkapp.forms import RegistrationForm, LoginForm
-from varkapp.models import get_content, User, Topic, Exercise
+from varkapp.models import get_content, User, Topic, Exercise, Content, Chapter
 from flask_login import login_user, current_user, logout_user, login_required
 import pdfplumber
 import glob
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
+
 @login_required
 def index():
     chapter, topic, content = get_content() 
@@ -81,8 +82,24 @@ def index():
         topic_vark_score = Exercise.query.filter_by(user_id=userid, topic_id = ex.topic_id).all()
         for vark in topic_vark_score:
             print(vark.learntype, " : ", vark.getpoint, "/", vark.fullpoint)"""
+
+    user_exercise = dict() # {Chapter : {Topic : {Learntype : percent } } }
+    for ex in exerciseDB:
+        db_topic = Topic.query.filter_by(id=ex.topic_id).first()
+        
+        #print('Chapter : ', db_topic.chapter_id)
+        if db_topic.chapter_id not in user_exercise:
+            user_exercise[db_topic.chapter_id] = {}
+        #print('Topic : ', db_topic.number)
+        if db_topic.number not in user_exercise[db_topic.chapter_id]:
+            user_exercise[db_topic.chapter_id][db_topic.number] = {}
+
+        #print("Learn :", ex.learntype, " ,Percent : ", ex.percent)
+        if ex.learntype not in user_exercise[db_topic.chapter_id][db_topic.number]:
+            user_exercise[db_topic.chapter_id][db_topic.number][ex.learntype] = int(float(ex.percent))
+
     return render_template('index.html', title = "VARK", chapter=chapter, topic=topic, content=content,\
-    Exercise=Exercise, User=User, Topic=Topic, chapter_sum = chapter_sum)
+    user_exercise=user_exercise, User=User, Topic=Topic, chapter_sum = chapter_sum)
 
 @app.route('/registration', methods=['GET', 'POST'])
 def registration():
@@ -268,8 +285,8 @@ def submit_exercise():
             answer_file = file
 
         # read answer in text file
-        #Text_file = open(answer_file, 'r', encoding='utf-8-sig')
-        Text_file = open(answer_file, 'r', encoding='utf-8')
+        Text_file = open(answer_file, 'r', encoding='utf-8-sig')
+        #Text_file = open(answer_file, 'r', encoding='utf-8')
         answer_choice = []
         for check_c in Text_file:
             
@@ -332,8 +349,106 @@ def submit_exercise():
         #print("############## Result ######################")
         #print("User : ",  User.query.filter_by(email=current_user.email).first().firstname)
         #print("Select : ", select_choice)
-        #print("Answer : ", answer_choice)
+        print("Answer : ", answer_choice)
         #print("Learn type : ", learntype)
         #print("correct : ", get_points)
 
         return redirect(url_for('index'))
+
+@app.route('/vark_report')
+def vark_report():
+    print_out_report()
+    return send_file('vark_report.xlsx',  as_attachment=True, mimetype='application/vnd.ms-excel',)
+
+
+from openpyxl import Workbook
+def print_out_report():
+    workbook = Workbook()
+    sheet = workbook.active
+
+    # user column
+    sheet.merge_cells(start_row=1, start_column=1, end_row=2, end_column=5)
+    sheet["A1"] = "User"
+    sheet["A3"] = "Firstname"
+    sheet["B3"] = "Lastname"
+    sheet["C3"] = "Gender"
+    sheet["D3"] = "Age"
+    sheet["E3"] = "Email"
+
+    # learn column
+    start_column = 6
+    topic_row = 2
+    topic_start_column = 6
+    content_row = 3
+    allchapter = Chapter.query.all()
+
+    for chapter in allchapter:
+    
+        chapter_no = chapter.number
+        chapter_topic = Topic.query.filter_by(chapter_id=chapter.id).all()
+
+        chapter_merge = 0
+        #print("chapter : ", chapter.number)
+        for topic in chapter_topic:
+            topic_merge = 1
+            if topic.number != 'P' and topic.number != 'T':
+                chapter_merge += 4
+                topic_merge = 4
+                content_start_column = topic_start_column 
+                for media in ['V', 'A', 'R', 'K']:
+                    sheet.cell(row=content_row, column=content_start_column).value = media
+                    content_start_column += 1
+            else:
+                chapter_merge += 1
+                topic_merge = 1
+                sheet.cell(row=content_row, column=topic_start_column).value = topic.number
+
+            #print(topic.number, ", topic merge: ", topic_merge)
+            topic_end_column = topic_start_column + topic_merge - 1
+            sheet.merge_cells(start_row=topic_row, start_column=topic_start_column, end_row=topic_row, end_column=topic_end_column)
+            sheet.cell(row=topic_row, column=topic_start_column).value = topic.number
+            topic_start_column = topic_end_column + 1
+        
+        #print("chapter merge : ", chapter_merge)
+        chapter_row = 1
+        end_column = start_column + chapter_merge - 1
+        sheet.merge_cells(start_row=chapter_row, start_column=start_column, end_row=chapter_row, end_column=end_column)
+        sheet.cell(row=chapter_row, column=start_column).value = chapter.name
+
+        start_column = end_column + 1
+
+    # user excercise
+    alluser = User.query.all()
+    user_row_start = 4
+    for user in alluser:
+        user_column = 1
+        if user.user_type != 'Admin':
+            firstname = user.firstname
+            lastname = user.lastname
+            gender = user.gender
+            age = user.age
+            email = user.email
+    
+            for uinfo in [firstname, lastname, gender, age, email]:
+                sheet.cell(row=user_row_start, column=user_column).value = uinfo
+                user_column += 1
+         
+            for chapter in allchapter:
+                chapter_topic = Topic.query.filter_by(chapter_id=chapter.id).all()
+                for topic in chapter_topic:
+                    user_excercise = Exercise.query.filter_by(user_id=user.id, topic_id = topic.id).first()
+                    if user_excercise:
+                        if topic.number == 'P' or topic.number == 'T':
+                            sheet.cell(row=user_row_start, column=user_column).value = user_excercise.percent
+                            user_column += 1
+                        else:
+                            for media in ['V', 'A', 'R', 'K']:  
+                                media_point = Exercise.query.filter_by(user_id=user.id, topic_id = topic.id, learntype=media).first()
+                                if media_point:
+                                    sheet.cell(row=user_row_start, column=user_column).value = media_point.percent
+                                    user_column += 1
+                                else:
+                                    sheet.cell(row=user_row_start, column=user_column).value = '-'
+                                    user_column += 1
+            user_row_start += 1
+    workbook.save(filename="varkapp/vark_report.xlsx")

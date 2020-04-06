@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- Content -->
+
+    {% set top_index = namespace(value=0) %}
+    {% set cont_index = namespace(value=0) %}
+    
+    {% set topicnumber = namespace(value=0) %}
+    <!-- iterate Chapter-->
+    {% for cid, cname in chapter.items() %}
+    
+    <!-- Check chapter 2 down, disable that chapter if previous test not pass yet(score > 50%)-->
+    {% if cid > 1 %}
+        <!-- Test id of previous chapter -->
+        {% set prev_topic = Topic.query.filter_by(number='T', chapter_id=cid-1).first().id %}
+        <!-- Get User Test id -->
+        {% set prev_test = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=prev_topic).first() %}
+        
+        <!-- user exam exist in database(user have done the exam)  -->
+        {% if prev_test %}
+            <!-- Get User Test score -->
+            {% set prevtest_percent = prev_test.percent | int %}
+            <!-- If not pass previous chapter, disable the less chapter -->
+            {% if prevtest_percent < 50  %}
+                <div style="padding: 30px; pointer-events: none; cursor: default;opacity: .4;">
+            <!-- If pass previous chapter, enable current chapter -->
+            {% else %}
+                <div style="padding: 30px;">
+            {% endif %}
+        <!-- user not do the exam yet -->
+        {% else %}
+            <div style="padding: 30px; pointer-events: none; cursor: default;opacity: .4;">
+        {% endif %}
+    <!-- Enable Chapter 1-->
+    {% else %}
+    <div style="padding: 30px;">
+    {% endif %}
+
+    <!-- Chapter Name-->
+    <h3>{{ cname }}</h3>
+    <hr>
+    <div class="chapter-block">
+    <div style="margin-left: 50px;">
+        {% for tid, tname in topic[top_index.value].items() %}
+            <!-- Disable if it not pretest -->
+            {% if tid != 'P' %}
+                <!-- Get previous topic key -->
+                {% set topiclist = topic[top_index.value].keys() | list %}
+                {% set prevtopic_key = topiclist[topiclist.index(tid) - 1] %}
+                <!-- Get previous topic Record from database -->
+                {% set chprev_topic = Topic.query.filter_by(number=prevtopic_key, chapter_id=cid).first().id %}
+                <!-- Get previous topic exercise Record from database -->
+                {% set prev_exam = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=chprev_topic).all() %}
+                
+                <!--if previous exercise have done -->
+                {% if prev_exam %}
+                    {% set max_score = namespace(value=0) %}
+                        {% for score in prev_exam %}
+                        
+                            {% set iscore = score.percent | int %}
+                        
+                            {% if iscore > max_score.value %}
+                                {% set  max_score.value = iscore %}
+                            {%endif%}
+                    {%endfor%}
+                    <!-- If done pretest -->
+                    {% if prevtopic_key != 'P' %}
+                        <!--If score is more that 50 %, unlock the next topic-->
+                        {% if max_score.value >= 50 %}
+                            <div>
+                        <!-- score < 50-->        
+                        {% else %}
+                            <div style="pointer-events: none; cursor: default;opacity: .4;">
+                        {% endif %}
+                    <!-- If done pretest unlock next topic without score-->
+                    {% else %}
+                        <div>
+                    {% endif %}
+                <!--if previous exercise not done yet -->
+                {% else %}
+                    <div style="pointer-events: none; cursor: default;opacity: .4;">
+                {% endif %}
+
+             <!-- Enable Pretest -->    
+            {% else %}
+                <div>
+            {% endif %}
+            
+            <!-- User exercise info variable -->
+            {% set get_topicDB = Topic.query.filter_by(number=tid, chapter_id=cid).first().id %}
+            {% set user_exercise = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).first() %}
+            
+            <!-- Topic Name-->
+            {% if tid != 'P' and tid != 'T'%}
+                {{ tid }}. 
+            {% endif %}
+                {{ tname }}
+            &nbsp;&nbsp;
+            <!-- VARK, Pretest, Exercise, Test -->
+            {% for ctid, cinfo in content[cont_index.value].items() %}  
+            
+            {% if 'K' in ctid %}
+               
+                <a href="#" onclick="openklist({{ cinfo }});enable_exercise('{{topicnumber.value}}');">{{ ctid }}</a>
+           
+
+            {% elif 'P' == ctid %}
+                <!-- if done, disable link -->
+                {% if user_exercise %}
+                    <a style="color:rgb(35, 230, 9);">Pretest</a>
+                    
+                {% else %}
+                    <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Pretest</a>
+                {% endif %}
+
+            {% elif 'E' == ctid %}
+            
+            
+                <a href="#" name="e{{topicnumber.value}}" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Exercise</a>
+                 
+                {% set topicnumber.value = topicnumber.value+1 %}
+            {% elif 'T' == ctid %}
+                <!-- if pass, disable link -->
+                {% if user_exercise %}
+                    {% set percent_score = user_exercise.percent | int %}
+                    {% if percent_score >= 50 %}
+                        <a style="color:rgb(35, 230, 9);"> Posttest</a>
+                    {% else %}
+                        <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Posttest</a>
+                    {% endif %}
+                {% else %}
+                    <a href="#" onclick="Examination('{{cinfo}}','{{cid}}', '{{tid}}');"> Posttest</a>
+                {% endif %}
+                
+            {% else %}
+            
+              
+                <a href="{{ cinfo }}" target="popup" onclick="window.open('{{ cinfo }}','popup','width=1000,height=800');learn_type('{{ ctid }}');enable_exercise('{{topicnumber.value}}'); return false;"> {{ ctid }} </a>
+           
+                
+
+            {% endif %}
+            {% endfor %}
+            
+            &nbsp;&nbsp;
+           
+            <!-- Mark exercise result -->
+            {% if user_exercise %}
+                {% if tid != 'P' and tid != 'T'%}
+                    {% set exercis_all = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).all() %}
+                    {% set max_score = namespace(value=0) %}
+                    <!-- Show vark score of topic -->
+                    {% for score in exercis_all %}
+                        {% if score.percent |int >= 80 %}
+                            <font color="#4ce400"><b>{{score.learntype}} {{score.percent | int}}%</b></font> 
+                        {% elif (score.percent |int >= 50) and (score.percent |int < 80) %}
+                            <font color="#ffe319"><b>{{score.learntype}} {{score.percent | int}}%</b></font>
+                        {% else %}
+                            <font color="red"><b>{{score.learntype}} {{score.percent | int}}%</b></font>
+                        {% endif %} 
+
+                        {% set iscore = score.percent | int %}
+                        {% if iscore > max_score.value %}
+                            {% set  max_score.value = iscore %}
+                        {%endif%}
+                    {%endfor%}
+
+                    <!-- Mark symbol -->
+                    {% if max_score.value  >= 80 %}
+                        <span style=" color: rgb(0, 175, 29); font-size:20px;">&#10004;</span>
+                    {% elif (max_score.value  >= 50) and (max_score.value  < 80) %}
+                        <span style=" color: rgb(0, 175, 29); font-size:20px;">&#10004;</span>
+                    {% else %}
+                        <span style=" color: rgb(228, 1, 1); font-size:20px;">&#10008;</span>
+                    {% endif %}
+                {% else %}
+                
+                    {% set exercis_all = Exercise.query.filter_by(user_id=User.query.filter_by(email=current_user.email).first().id, topic_id=get_topicDB).all() %}
+                    {% set max_score = namespace(value=0) %}
+                    {% for score in exercis_all %}
+                        {% set iscore = score.percent | int %}
+                        {% if iscore > max_score.value %}
+                            {% set  max_score.value = iscore %}
+                        {%endif%}
+                    {%endfor%}
+                    {% if max_score.value |int >= 80 %}
+                        <font color="#4ce400"><b>{{max_score.value | int}}  %</b></font> 
+                        <span style=" color: rgb(0, 175, 29); font-size:20px;">&#10004;</span>
+                    {% elif (max_score.value |int >= 50) and (max_score.value |int < 80) %}
+                        <font color="#ffe319"><b>{{max_score.value | int}}  %</b></font>
+                        <span style=" color: rgb(0, 175, 29); font-size:20px;">&#10004;</span>
+                    {% else %}
+                        <font color="red"><b>{{max_score.value | int}}  %</b></font>
+                        <span style=" color: rgb(228, 1, 1); font-size:20px;">&#10008;</span>
+                    {% endif %} 
+                    
+                {% endif %}
+            
+            {% endif %}
+
+            {% set cont_index.value = cont_index.value + 1 %}
+            </div>
+        {% endfor %}
+        {% set top_index.value = top_index.value + 1 %}
+    </div>
+    </div>
+    {% if chapter_sum[cid] %}
+    <div style="margin-left: 60px;">
+        <b>Result</b>
+        {% for vark in chapter_sum[cid] %}
+            {% if chapter_sum[cid][vark] |int >= 80 %}
+                <font color="#4ce400"><b>{{ vark }} {{ chapter_sum[cid][vark] }}%</b></font> 
+            {% elif (chapter_sum[cid][vark] |int >= 50) and (chapter_sum[cid][vark] |int < 80) %}
+                <font color="#ffe319"><b>{{ vark }} {{ chapter_sum[cid][vark] }}%</b></font>
+            {% else %}
+                <font color="red"><b>{{ vark }} {{ chapter_sum[cid][vark] }}%</b></font>
+            {% endif %} 
+            &nbsp;&nbsp;
+        {% endfor %}
+    </div>
+    {% endif %}
+    </div>
+    
+    {% endfor %}
+
+
+<script>
+
+//open flash file(.swf)
+function openswf (kpart){
+    console.log("GASDD")
+    window.open(kpart, "popwindow","resizable=no,menubar=no,directories=no,status=no,location=no,scrollbars=yes,width=1000,height=800");
+}
+
+var learntype="";
+// Click VARK and keep which type that user have clicked
+function learn_type(type){
+    learntype = type
+
+/*  
+    $.ajax({
+        url: "/learn_type",
+        type: "post", //send it through get method
+        data:{'learntype': type},
+        
+    })
+    .done(function(data){
+        if(data.error){
+            console.log("Error")
+        }
+        else{
+            console.log(data.response)
+        }
+
+    });
+*/
+}
+
+
+function Examination(testfile, chapterid, topicid){
+    disable_exercise()
+    $.ajax({
+            url: "/display_exercise",
+            type: "post", //send it through get method
+            data:{
+                'testfile': testfile,
+                'chapterid':chapterid,
+                'topicid':topicid,
+                'learntype':learntype
+
+            },
+            dataType: 'html',
+            success:function(response){document.write(response); learntype="";}
+        
+    })
+}
+
+function openklist( kfile ){
+    learntype = 'K'
+    var win = window.open('', '',"toolbar=no, width=600, height=400");
+    var doc = win.document.open();
+    doc.write('<title>K Learning</title>');
+    var part = 1;
+    for (k in kfile) {
+        
+        doc.write('<a href="javascript:opener.openswf(\''+kfile[k]+'\');"> Part'+part+'</a><br>');
+        part++;
+    }
+    
+    doc.close();
+}
+
+function disable_exercise(){
+    for(i = 0;i<25;i++){
+        var el=document.getElementsByName('e'+i)
+        el[0].classList.add('disabled');
+    }
+}
+function enable_exercise(number){
+    var el=document.getElementsByName('e'+number)
+    el[0].classList.remove('disabled');
+    
+}
+disable_exercise()
+</script>
+{% endblock content%}

@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- Content -->
+<div id="content">
+</div>
+
+<script>
+    
+    var chapter = JSON.parse('{{ chapter|tojson }}');
+    var topic = JSON.parse('{{ topic|tojson }}');
+    var content = JSON.parse('{{ content|tojson }}');
+    var user_exercise = JSON.parse('{{ user_exercise|tojson }}');
+    var chapter_sum = JSON.parse('{{ chapter_sum|tojson }}');
+  
+    // Display Learning and Exam content
+    function display_content(){
+        var content_div = document.getElementById("content");
+        content_div.innerHTML = "";
+        
+        var content_index = 0;
+        var topic_number = 0;
+        // Loop chapter
+        for(var ch in chapter){
+            
+            // recommend learning media
+            var recommend_media = ""
+            var recommend_underline = null
+            if(ch > 1){
+                var prev_sortable = []
+                var prev_chapter = ch-1
+                if(chapter_sum[prev_chapter]){
+                    for (var lp in chapter_sum[prev_chapter]) {
+                        prev_sortable.push([lp, chapter_sum[prev_chapter][lp]]);
+                    }
+
+                    prev_sortable.sort(function(a, b) {
+                        return b[1] - a[1];
+                    });
+                    recommend_underline = prev_sortable[0][0]
+                    recommend_media = "<font color='DodgerBlue' style='margin-left:20px'>* Recommend learning media : <u>"+prev_sortable[0][0]+"</u></font><br><br>"
+                }
+            }
+
+            // Loop chapter topic (chapter key begin with 1 but list(topic) begin with 0)
+            var topic_index = ch-1
+
+            // Get pretest percent, check if this chapter have score
+            var pretest_percent = ""
+            var pretest_pass = false;
+
+            if(user_exercise[ch]){
+                if(user_exercise[ch]['P']){
+                    var percentcolor = ''
+                    pretest_pass = true;
+                    if(user_exercise[ch]['P']['-'] >= 80){
+                        percentcolor = "#4ce400"
+                    }
+                    else if(user_exercise[ch]['P']['-'] >= 50 && user_exercise[ch]['P']['-'] < 80){
+                        percentcolor = "#ffe319"
+                    }
+                    else{
+                        percentcolor = 'red'
+                    }
+
+                    pretest_percent = "<font color="+percentcolor+"><b>"+user_exercise[ch]['P']['-']+" % </b></font>"
+                }
+            }
+
+            // write chapter topic to html
+            var display_topic = "<div id='topic' style='margin-left:20px'>"+topic[topic_index]['P']+
+                                "&nbsp;&nbsp;&nbsp;&nbsp;"+
+                                '<a href="#" onclick="Examination(\''+content[content_index]['P']+'\',\''+ch+'\', \'P\');">Pretest</a>'+
+                                "&nbsp;&nbsp;&nbsp;&nbsp;"+
+                                pretest_percent +
+                                "</div>";
+            content_index+=1;
+
+
+            // disable/enable topic if pretest pass.
+            var topic_style = 'margin-left:20px; pointer-events: none; cursor: default;opacity: .4;'
+            if(pretest_pass){
+                topic_style = 'margin-left:20px'
+            }
+                       
+            // Loop topic that not pretest/posttest
+            for(var tp in topic[topic_index]){
+                
+                var topic_percent = ""
+                if(user_exercise[ch]){
+                    if(user_exercise[ch][tp]){
+                        for(var lp in user_exercise[ch][tp]){
+                            var percentcolor = ''
+                            if(user_exercise[ch][tp][lp] >= 80){
+                                percentcolor = "#4ce400"
+                                
+                            }
+                            else if(user_exercise[ch][tp][lp]  >= 50 && user_exercise[ch][tp][lp]  < 80){
+                                percentcolor = "#ffe319"
+                                
+                            }
+                            else{
+                                percentcolor = 'red'
+                            }
+                            topic_percent += "<font color="+percentcolor+"><b>"+lp +" "+ user_exercise[ch][tp][lp]+" % </b></font> &nbsp;&nbsp;"
+                        }
+                    }
+                }
+
+                
+                if(tp !== 'P' && tp !== 'T'){
+
+                    // disable/enable if previous topic pass
+                    var user_topic_index = Object.keys(topic[topic_index]).indexOf(tp)
+                    
+                    // begin check with second topic.
+                    if(user_topic_index > 0){
+                        var prev_topic = Object.keys(topic[topic_index])[user_topic_index-1];
+                        
+                        if(user_exercise[ch] && user_exercise[ch][prev_topic]){
+                            var max_percent = Math.max(...Object.values(user_exercise[ch][prev_topic]))
+                            if(max_percent >= 50){
+                                topic_style = 'margin-left:20px'
+                            }
+                            else{
+                                topic_style = 'margin-left:20px; pointer-events: none; cursor: default;opacity: .4;'
+                            }
+                        }else{
+                            topic_style = 'margin-left:20px; pointer-events: none; cursor: default;opacity: .4;'
+                        }
+                    }                   
+
+                    // underline if recommend media is true
+                    if(recommend_underline){
+                        
+                        if(recommend_underline == 'V'){
+                            
+                            display_topic += "<div id='topic' style='"+topic_style+"'>"+tp+". "+topic[topic_index][tp]+
+                                    "&nbsp;&nbsp;&nbsp;&nbsp;"+
+                                    '<a href="'+content[content_index]['V']+'" target="popup" onclick="window.open(\''+content[content_index]['V']+'\',\'popup\',\'width=1000,height=800\');learn_type(\'V\');enable_exercise('+topic_number+'); return false;"><u> V </u></a>'+
+                                    '<a href="'+content[content_index]['A']+'" target="popup" onclick="window.open(\''+content[content_index]['A']+'\',\'popup\',\'width=1000,height=800\');learn_type(\'A\');enable_exercise('+topic_number+'); return false;"> A </a>'+
+                                    '<a href="'+content[content_index]['R']+'" target="popup" onclick="window.open(\''+content[content_index]['R']+'\',\'popup\',\'width=1000,height=800\');learn_type(\'R\');enable_exercise('+topic_number+'); return false;"> R </a>'+
+                                    "<a href='#' onclick='openklist("+JSON.stringify(content[content_index]['K'])+");enable_exercise("+topic_number+");'>K</a>"+
+                                    '<a href="#" name="e'+topic_number+'"; onclick="Examination(\''+content[content_index]['E']+'\',\''+ch+'\', \''+tp+'\');"> Exercise</a>'+
+                                    "&nbsp;&nbsp;&nbsp;&nbsp;"+
+                                    topic_percent+
+                                    "</div>"; 
+                            topic_number+=1;
+                            content_index+=1;
+                        }
+                        else if(recommend_underline == 'A'){
+                            display_topic += "<div id='topic' style='"+topic_style+"'>"+tp+". "+topic[topic_index][tp]+
+                                    "&nbsp;&nbsp;&nbsp;&nbsp;"+
+                                    '<a href="'+content[content_index]['V']+'" target="popup" onclick="window.open(\''+content[content_index]['V']+'\',\'popup\',\'width=1000,height=800\');learn_type(\'V\');enable_exercise('+topic_number+'); return false;"> V </a>'+
+                                    '<a href="'+content[content_index]['A']+'" target="popup" onclick="window.open(\''+content[content_index]['A']+'\',\'popup\',\'width=1000,height=800\');learn_type(\'A\');enable_exercise('+topic_number+'); return false;"><u> A </u></a>'+
+                                    '<a href="'+content[content_index]['R']+'" target="popup" onclick="window.open(\''+content[content_index]['R']+'\',\'popup\',\'width=1000,height=800\');learn_type(\'R\');enable_exercise('+topic_number+'); return false;"> R </a>'+
+                                    "<a href='#' onclick='openklist("+JSON.stringify(content[content_index]['K'])+");enable_exercise("+topic_number+");'>K</a>"+
+                                    '<a href="#" name="e'+topic_number+'"; onclick="Examination(\''+content[content_index]['E']+'\',\''+ch+'\', \''+tp+'\');"> Exercise</a>'+
+                                    "&nbsp;&nbsp;&nbsp;&nbsp;"+
+                                    topic_percent+
+                                    "</div>"; 
+                            topic_number+=1;
+                            content_index+=1;
+                        }
+                        else if(recommend_underline == 'R'){
+                            display_topic += "<div id='topic' style='"+topic_style+"'>"+tp+". "+topic[topic_index][tp]+
+                                    "&nbsp;&nbsp;&nbsp;&nbsp;"+
+                                    '<a href="'+content[content_index]['V']+'" target="popup" onclick="window.open(\''+content[content_index]['V']+'\',\'popup\',\'width=1000,height=800\');learn_type(\'V\');enable_exercise('+topic_number+'); return false;"> V </a>'+
+                                    '<a href="'+content[content_index]['A']+'" target="popup" onclick="window.open(\''+content[content_index]['A']+'\',\'popup\',\'width=1000,height=800\');learn_type(\'A\');enable_exercise('+topic_number+'); return false;"> A </a>'+
+                                    '<a href="'+content[content_index]['R']+'" target="popup" onclick="window.open(\''+content[content_index]['R']+'\',\'popup\',\'width=1000,height=800\');learn_type(\'R\');enable_exercise('+topic_number+'); return false;"><u> R </u></a>'+
+                                    "<a href='#' onclick='openklist("+JSON.stringify(content[content_index]['K'])+");enable_exercise("+topic_number+");'>K</a>"+
+                                    '<a href="#" name="e'+topic_number+'"; onclick="Examination(\''+content[content_index]['E']+'\',\''+ch+'\', \''+tp+'\');"> Exercise</a>'+
+                                    "&nbsp;&nbsp;&nbsp;&nbsp;"+
+                                    topic_percent+
+                                    "</div>"; 
+                            topic_number+=1;
+                            content_index+=1;
+                        }
+                        else if(recommend_underline == 'K'){
+                            display_topic += "<div id='topic' style='"+topic_style+"'>"+tp+". "+topic[topic_index][tp]+
+                                    "&nbsp;&nbsp;&nbsp;&nbsp;"+
+                                    '<a href="'+content[content_index]['V']+'" target="popup" onclick="window.open(\''+content[content_index]['V']+'\',\'popup\',\'width=1000,height=800\');learn_type(\'V\');enable_exercise('+topic_number+'); return false;"> V </a>'+
+                                    '<a href="'+content[content_index]['A']+'" target="popup" onclick="window.open(\''+content[content_index]['A']+'\',\'popup\',\'width=1000,height=800\');learn_type(\'A\');enable_exercise('+topic_number+'); return false;"> A </a>'+
+                                    '<a href="'+content[content_index]['R']+'" target="popup" onclick="window.open(\''+content[content_index]['R']+'\',\'popup\',\'width=1000,height=800\');learn_type(\'R\');enable_exercise('+topic_number+'); return false;"> R </a>'+
+                                    "<a href='#' onclick='openklist("+JSON.stringify(content[content_index]['K'])+");enable_exercise("+topic_number+");'><u> K </u></a>"+
+                                    '<a href="#" name="e'+topic_number+'"; onclick="Examination(\''+content[content_index]['E']+'\',\''+ch+'\', \''+tp+'\');"> Exercise</a>'+
+                                    "&nbsp;&nbsp;&nbsp;&nbsp;"+
+                                    topic_percent+
+                                    "</div>"; 
+                            topic_number+=1;
+                            content_index+=1;
+                        }
+
+                    }  
+                    else{
+                        display_topic += "<div id='topic' style='"+topic_style+"'>"+tp+". "+topic[topic_index][tp]+
+                                    "&nbsp;&nbsp;&nbsp;&nbsp;"+
+                                    '<a href="'+content[content_index]['V']+'" target="popup" onclick="window.open(\''+content[content_index]['V']+'\',\'popup\',\'width=1000,height=800\');learn_type(\'V\');enable_exercise('+topic_number+'); return false;"> V </a>'+
+                                    '<a href="'+content[content_index]['A']+'" target="popup" onclick="window.open(\''+content[content_index]['A']+'\',\'popup\',\'width=1000,height=800\');learn_type(\'A\');enable_exercise('+topic_number+'); return false;"> A </a>'+
+                                    '<a href="'+content[content_index]['R']+'" target="popup" onclick="window.open(\''+content[content_index]['R']+'\',\'popup\',\'width=1000,height=800\');learn_type(\'R\');enable_exercise('+topic_number+'); return false;"> R </a>'+
+                                    "<a href='#' onclick='openklist("+JSON.stringify(content[content_index]['K'])+");enable_exercise("+topic_number+");'>K</a>"+
+                                    '<a href="#" name="e'+topic_number+'"; onclick="Examination(\''+content[content_index]['E']+'\',\''+ch+'\', \''+tp+'\');"> Exercise</a>'+
+                                    "&nbsp;&nbsp;&nbsp;&nbsp;"+
+                                    topic_percent+
+                                    "</div>"; 
+                        topic_number+=1;
+                        content_index+=1;
+
+                    }
+                    
+                }      
+            }
+            
+            // Get posttest percent, check if this chapter have score
+            var posttest_percent = ""
+            
+            if(user_exercise[ch]){
+                if(user_exercise[ch]['T']){
+                    var percentcolor = ''
+                    if(user_exercise[ch]['T']['-'] >= 80){
+                        percentcolor = "#4ce400"
+                    }
+                    else if(user_exercise[ch]['T']['-'] >= 50 && user_exercise[ch]['T']['-'] < 80){
+                        percentcolor = "#ffe319"
+                    }
+                    else{
+                        percentcolor = 'red'
+                    }
+                    posttest_percent = "<font color="+percentcolor+"><b>"+user_exercise[ch]['T']['-']+" % </b></font>"
+                }
+            }
+            // disable/enable if previous topic pass
+            var user_topic_index = Object.keys(topic[topic_index]).indexOf('T')
+                    
+            // begin check with second topic.
+            if(user_topic_index > 0){
+                var prev_topic = Object.keys(topic[topic_index])[user_topic_index-2];
+                
+                if(user_exercise[ch] && user_exercise[ch][prev_topic]){
+                    var max_percent = Math.max(...Object.values(user_exercise[ch][prev_topic]))
+                    if(max_percent >= 50){
+                        topic_style = 'margin-left:20px'
+                    }
+                    else{
+                        topic_style = 'margin-left:20px; pointer-events: none; cursor: default;opacity: .4;'
+                    }
+                }else{
+                    topic_style = 'margin-left:20px; pointer-events: none; cursor: default;opacity: .4;'
+                }
+            }                   
+            display_topic += "<div id='topic' style='"+topic_style+"'>"+topic[topic_index]['T']+
+                                "&nbsp;&nbsp;&nbsp;&nbsp;"+
+                                '<a href="#" onclick="Examination(\''+content[content_index]['T']+'\',\''+ch+'\', \'T\');">Posttest</a>'+
+                                "&nbsp;&nbsp;&nbsp;&nbsp;"+
+                                posttest_percent +
+                                "</div>";
+            
+            content_index+=1;
+            
+            // Chapter summary
+            var sortable = [];
+            var chapter_summary = ""
+            if(chapter_sum[ch]){
+                chapter_summary += "<div style='margin-left:20px'>Result"
+                chapter_summary += "&nbsp;&nbsp;&nbsp;&nbsp;"
+                for (var lp in chapter_sum[ch]) {
+                    sortable.push([lp, chapter_sum[ch][lp]]);
+                }
+
+                sortable.sort(function(a, b) {
+                    return b[1] - a[1];
+                });
+
+                
+                //write summary to html
+                for(var slp in sortable){
+                    var percentcolor = ''
+                    if(sortable[slp][1] >= 80){
+                        percentcolor = "#4ce400"
+                    }
+                    else if(sortable[slp][1] >= 50 && sortable[slp][1] < 80){
+                        percentcolor = "#ffe319"
+                    }
+                    else{
+                        percentcolor = 'red'
+                    }
+                    chapter_summary += "<font color="+percentcolor+"><b>"+sortable[slp][0] + " : "+sortable[slp][1]+" % </b></font>"+"&nbsp;&nbsp;&nbsp;&nbsp;"
+                }
+                chapter_summary += "</div>"
+
+            }
+
+            // disable/enable chapter
+            var chapter_style = 'margin:20px;'
+            if(ch > 1){
+                // if finished prev chapter
+                if(recommend_underline){
+                    chapter_style = 'margin:20px;'
+                }
+                else{
+                    chapter_style = 'margin:20px; pointer-events: none; cursor: default;opacity: .4;'
+                }
+
+            }
+            
+            // write chapter to html
+            content_div.innerHTML += "<div id='chapter' style='"+chapter_style+"'>"+
+                                    "<h3>"+chapter[ch]+"</h3>"+
+                                    "<hr>"+
+                                    recommend_media+
+                                    display_topic+
+                                    "<br>"+
+                                    chapter_summary+
+                                    "</div>";
+            
+        }
+
+    }
+    display_content()
+
+    var learntype="";
+    // Click VARK and keep which type that user have clicked
+    function learn_type(type){
+        learntype = type
+    }
+
+    function Examination(testfile, chapterid, topicid){
+        disable_exercise()
+        console.log(testfile, chapterid, topicid)
+        $.ajax({
+                url: "/display_exercise",
+                type: "post", //send it through get method
+                data:{
+                    'testfile': testfile,
+                    'chapterid':chapterid,
+                    'topicid':topicid,
+                    'learntype':learntype
+
+                },
+                dataType: 'html',
+                success:function(response){document.write(response); learntype="";}
+            
+        })
+    }
+
+    function openklist( kfile ){
+        learntype = 'K'
+        var win = window.open('', '',"toolbar=no, width=600, height=400");
+        var doc = win.document.open();
+        doc.write('<title>K Learning</title>');
+        var part = 1;
+        for (k in kfile) {
+            
+            doc.write('<a href="javascript:opener.openswf(\''+kfile[k]+'\');"> Part'+part+'</a><br>');
+            part++;
+        }
+        
+        doc.close();
+    }
+
+    function disable_exercise(){
+        for(i = 0;i<25;i++){
+            var el=document.getElementsByName('e'+i)
+            el[0].classList.add('disabled');
+        }
+    }
+    disable_exercise()
+
+    function enable_exercise(number){
+        var el=document.getElementsByName('e'+number)
+        el[0].classList.remove('disabled');
+        
+    }
+    //open flash file(.swf)
+    function openswf (kpart){
+        window.open(kpart, "popwindow","resizable=no,menubar=no,directories=no,status=no,location=no,scrollbars=yes,width=1000,height=800");
+    }
+</script>
+
+{% endblock content%}
