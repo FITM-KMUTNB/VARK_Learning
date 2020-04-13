@@ -13,75 +13,8 @@ def index():
     chapter, topic, content = get_content() 
     userid = User.query.filter_by(email=current_user.email).first().id
     exerciseDB = Exercise.query.filter_by(user_id=userid).all()
-    chapter_sum = dict()
-    allchapter_varkscore = dict()
-    for cid in chapter:
-        vark_chapter = dict()
-        #print("Chapter :", cid)
-        for tobj in Topic.query.filter_by(chapter_id=cid).all():
-            exercise_list = Exercise.query.filter_by(user_id=userid, topic_id=tobj.id).all()
-            if exercise_list:
-                #print("Topic : ",tobj.number)
-                for exobj in exercise_list:
-                    if tobj.number != "P" and tobj.number != "T" :
-                        if exobj.learntype == "-":
-                            continue
-                        if exobj.learntype not in vark_chapter:
-                            vark_chapter[exobj.learntype] = [int(exobj.getpoint), int(exobj.fullpoint)]
-                        else:
-                            plusscore = vark_chapter[exobj.learntype][0] + int(exobj.getpoint)
-                            allscore = vark_chapter[exobj.learntype][1] + int(exobj.fullpoint)
-                            vark_chapter[exobj.learntype] = [plusscore, allscore]
-                        #print(exobj.learntype, " : ", exobj.getpoint, "/", exobj.fullpoint)
-                        #print(vark_chapter)
-                    elif tobj.number == "T":
-                        test_past = (int(exobj.getpoint)/int(exobj.fullpoint))*100
-                        if test_past >= 50:
-                            chapter_percent = dict()
-                            # more that chapter 1, calculate sum of vark from chapter1 to current chapter.
-                            if cid > 1:
-                                vark_score = dict()
-                                allchapter_varkscore[cid] = vark_chapter
-                                for prevch in allchapter_varkscore:
-                                    for vark in allchapter_varkscore[prevch]:
-                                        if vark not in vark_score:
-                                            topic_getpoint = allchapter_varkscore[prevch][vark][0]
-                                            topic_fullpoint = allchapter_varkscore[prevch][vark][1]
-                                            vark_score[vark] = [topic_getpoint, topic_fullpoint]
-                                        else:
-                                            topic_getpoint = allchapter_varkscore[prevch][vark][0]
-                                            topic_fullpoint = allchapter_varkscore[prevch][vark][1]
-                                            topic_pluspoint = vark_score[vark][0] + topic_getpoint
-                                            topic_plusfull = vark_score[vark][1] + topic_fullpoint
-                                            vark_score[vark] = [topic_pluspoint, topic_plusfull]
-
-                                for vark in vark_score:
-                                    percent = ( vark_score[vark][0]/ vark_score[vark][1])*100
-                                    #print(vark," : ",percent, " %")
-                                    chapter_percent[vark] = int(percent)
-                                chapter_sum[cid] = chapter_percent
-
-                            #chapter 1 vark percent
-                            else:
-                                for vark in vark_chapter:
-                                    percent = ( vark_chapter[vark][0]/ vark_chapter[vark][1])*100
-                                    #print(vark," : ",percent, " %")
-                                    chapter_percent[vark] = int(percent)
-                                allchapter_varkscore[cid] = vark_chapter
-                                chapter_sum[cid] = chapter_percent
-    # [getpoint, fullpoint]                        
-    # {1: {'V': [3, 10], 'A': [0, 10], 'R': [13, 20], 'K': [0, 5]}, 2: {'R': [3, 5], 'V': [2, 5], 'A': [4, 5]}}
-    #print(allchapter_varkscore)
-
-    # vark percent of each chapters
-    #print(chapter_sum)           
-    """
-    for ex in exerciseDB:
-        db_topic = Topic.query.filter_by(id=ex.topic_id).first()
-        print('Chapter : ', db_topic.chapter_id)
-        topic_vark_score = Exercise.query.filter_by(user_id=userid, topic_id = ex.topic_id).all()
-        for vark in topic_vark_score:
-            print(vark.learntype, " : ", vark.getpoint, "/", vark.fullpoint)"""
+   
+    chapter_sum = chapter_summary()
 
     user_exercise = dict() # {Chapter : {Topic : {Learntype : percent } } }
     for ex in exerciseDB:
@@ -97,7 +30,10 @@ def index():
         #print("Learn :", ex.learntype, " ,Percent : ", ex.percent)
         if ex.learntype not in user_exercise[db_topic.chapter_id][db_topic.number]:
             user_exercise[db_topic.chapter_id][db_topic.number][ex.learntype] = int(float(ex.percent))
-
+        else:
+            del user_exercise[db_topic.chapter_id][db_topic.number][ex.learntype] 
+            user_exercise[db_topic.chapter_id][db_topic.number][ex.learntype] = int(float(ex.percent))
+ 
     return render_template('index.html', title = "VARK", chapter=chapter, topic=topic, content=content,\
     user_exercise=user_exercise, User=User, Topic=Topic, chapter_sum = chapter_sum)
 
@@ -312,38 +248,13 @@ def submit_exercise():
         
         # Add to Exercise table
         exerciseDB = Exercise.query.filter_by(user_id=userid, topic_id=db_topicid).first()
-        # if this exercise have done before --> update score
-        if exerciseDB:
-            exercis_topic = Exercise.query.filter_by(user_id=userid, topic_id=db_topicid).all()
-            update_score = False
-            for ext in exercis_topic:
-                if ext.learntype == learntype:
-                    update_score = True
-
-            if update_score:
-                percent = (get_points/full_point) * 100
-                exerciseDB.learntype = learntype
-                exerciseDB.getpoint = get_points
-                exerciseDB.percent = percent
-                db.session.commit()
-                print("Update database.")
-                print(Exercise.query.filter_by(user_id=userid, topic_id=db_topicid).first())
-            else:
-                percent = (get_points/full_point) * 100
-                exerciseDB = Exercise(learntype=learntype, fullpoint=full_point, getpoint=get_points,percent=percent,\
-                                        user_id=userid, topic_id=db_topicid)
-                db.session.add(exerciseDB)
-                db.session.commit()
-                print(Topic.query.filter_by(id=db_topicid).first(), " : Submit")
-
         # add new exercise score
-        else:
-            percent = (get_points/full_point) * 100
-            exerciseDB = Exercise(learntype=learntype, fullpoint=full_point, getpoint=get_points,percent=percent,\
-                                    user_id=userid, topic_id=db_topicid)
-            db.session.add(exerciseDB)
-            db.session.commit()
-            print(Topic.query.filter_by(id=db_topicid).first(), " : Submit")
+        percent = (get_points/full_point) * 100
+        exerciseDB = Exercise(learntype=learntype, fullpoint=full_point, getpoint=get_points,percent=percent,\
+                                user_id=userid, topic_id=db_topicid)
+        db.session.add(exerciseDB)
+        db.session.commit()
+        print(Topic.query.filter_by(id=db_topicid).first(), " : Submit")
 
         # Exercise Result
         #print("############## Result ######################")
@@ -360,6 +271,59 @@ def vark_report():
     print_out_report()
     return send_file('vark_report.xlsx',  as_attachment=True, mimetype='application/vnd.ms-excel',)
 
+def chapter_summary():
+    chapter_sum = dict() #{1: {'V': 25, 'R': 53, 'A': 80, 'K': 50}}
+    vark_earn_score = dict()
+    vark_full_score = dict()
+    allchapter = Chapter.query.all()
+    userid = User.query.filter_by(email=current_user.email).first().id
+
+    # iterate chapter
+    for ch in allchapter:
+        chapter_vark = dict()
+        chapter_topic = Topic.query.filter_by(chapter_id=ch.id)
+        # iterate chapter topic
+        for tp in chapter_topic:
+            # filter topic excercise of user
+            user_result = Exercise.query.filter_by(user_id=userid, topic_id=tp.id).all()
+            # skip pretest and posttest
+            if tp.number != 'P' and tp.number != 'T' and user_result:
+                # get v a r k earned score of topic
+                topic_vark = dict()
+                for us in user_result:
+                    if us.learntype in topic_vark:
+                        # in case do the same vark sevaral time, get highest score.
+                        if topic_vark[us.learntype] < int(us.getpoint):
+                            topic_vark[us.learntype] = int(us.getpoint)
+                    else:
+                        topic_vark[us.learntype] = int(us.getpoint)
+                # score this toppic score to chapter dict()
+                for tk in topic_vark:
+                    if tk in chapter_vark:
+                        chapter_vark[tk] += topic_vark[tk]
+                    else:
+                        chapter_vark[tk] = topic_vark[tk]
+
+                    # sum of full score from first chapter and keep increasing
+                    if tk in vark_full_score:
+                        vark_full_score[tk] += 5
+                    else:
+                        vark_full_score[tk] = 5
+                
+
+            # if done posttest
+            elif tp.number == 'T' and user_result:
+                for ck in chapter_vark:
+                    if ck in vark_earn_score:
+                        vark_earn_score[ck] += chapter_vark[ck]
+                    else:
+                        vark_earn_score[ck] = chapter_vark[ck]
+                
+                chapter_sum[ch.id] = {}
+                for vs in vark_earn_score:
+                    chapter_sum[ch.id][vs] = int((vark_earn_score[vs] / vark_full_score[vs]) * 100)
+
+    return chapter_sum
 
 from openpyxl import Workbook
 def print_out_report():
@@ -392,10 +356,10 @@ def print_out_report():
         for topic in chapter_topic:
             topic_merge = 1
             if topic.number != 'P' and topic.number != 'T':
-                chapter_merge += 4
-                topic_merge = 4
+                chapter_merge += 6
+                topic_merge = 6
                 content_start_column = topic_start_column 
-                for media in ['V', 'A', 'R', 'K']:
+                for media in ['V', 'A', 'R', 'K','Times', 'Score']:
                     sheet.cell(row=content_row, column=content_start_column).value = media
                     content_start_column += 1
             else:
@@ -443,12 +407,30 @@ def print_out_report():
                             user_column += 1
                         else:
                             for media in ['V', 'A', 'R', 'K']:  
-                                media_point = Exercise.query.filter_by(user_id=user.id, topic_id = topic.id, learntype=media).first()
+                                media_point = Exercise.query.filter_by(user_id=user.id, topic_id = topic.id, learntype=media).all()
+                                
                                 if media_point:
-                                    sheet.cell(row=user_row_start, column=user_column).value = media_point.percent
+                                    highest_percent = 0
+                                    for mp in media_point:
+                                        if highest_percent < int(float(mp.percent)):
+                                            highest_percent = int(float(mp.percent))
+                                    sheet.cell(row=user_row_start, column=user_column).value = highest_percent
                                     user_column += 1
                                 else:
                                     sheet.cell(row=user_row_start, column=user_column).value = '-'
                                     user_column += 1
+
+                            topic_score = Exercise.query.filter_by(user_id=user.id, topic_id = topic.id).all()
+                            score_vark = ''
+                            num = 0
+                            for ts in topic_score:
+                                score_vark += ts.learntype + ':' +str(int(float(ts.percent)))
+                                num += 1
+                                if num < len(topic_score):
+                                    score_vark += ', '
+                            sheet.cell(row=user_row_start, column=user_column).value = len(topic_score)
+                            user_column += 1
+                            sheet.cell(row=user_row_start, column=user_column).value = score_vark
+                            user_column += 1
             user_row_start += 1
     workbook.save(filename="varkapp/vark_report.xlsx")

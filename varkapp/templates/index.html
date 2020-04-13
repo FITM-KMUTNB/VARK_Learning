@@ -178,11 +178,18 @@
                     if(topic_number == 'P'){
                         el[0].classList.add('disabled');
                     }
-                    if(max_percent >= 50){
-                        for(i = 0; i < el.length; i++){
-                            el[i].classList.add('disabled');
-                        }
+                    else if(topic_number == 'T'){
+                        el[0].classList.add('disabled');
                     }
+                    else{
+                        if(max_percent >= 50){
+                            for(i = 0; i < el.length; i++){
+                                el[i].classList.add('disabled');
+                            }
+                        }
+
+                    }
+                    
                 
                 }
             
