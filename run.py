@@ -1,4 +1,5 @@
-from varkapp import app
+from varkapp import app, manager
 
 if __name__ == "__main__":
     app.run(debug=True)
+    #manager.run()

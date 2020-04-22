@@ -58,15 +58,16 @@ def print_out_report():
                 chapter_merge += 6
                 topic_merge = 6
                 content_start_column = topic_start_column 
-                for media in ['V', 'A', 'R', 'K','Times', 'Score']:
+                for media in ['V', 'A', 'R', 'K','Ex Count', 'All score']:
                     sheet.cell(row=content_row, column=content_start_column).value = media
                     content_start_column += 1
             else:
-                chapter_merge += 1
-                topic_merge = 1
-                sheet.cell(row=content_row, column=topic_start_column).value = topic.number
+                chapter_merge += 2
+                topic_merge = 2
+                sheet.cell(row=content_row, column=topic_start_column).value = 'Score'
+                sheet.cell(row=content_row, column=topic_start_column+1).value = 'Time'
 
-            #print(topic.number, ", topic merge: ", topic_merge)
+            print(topic.number, ", topic merge: ", topic_merge)
             topic_end_column = topic_start_column + topic_merge - 1
             sheet.merge_cells(start_row=topic_row, start_column=topic_start_column, end_row=topic_row, end_column=topic_end_column)
             sheet.cell(row=topic_row, column=topic_start_column).value = topic.number
@@ -104,6 +105,13 @@ def print_out_report():
                         if topic.number == 'P' or topic.number == 'T':
                             sheet.cell(row=user_row_start, column=user_column).value = user_excercise.percent
                             user_column += 1
+                            # type = User, not have time stramp in exercise 
+                            if user.user_type == 'User':
+                                sheet.cell(row=user_row_start, column=user_column).value = '-'
+                                user_column += 1
+                            else:
+                                sheet.cell(row=user_row_start, column=user_column).value = user_excercise.time
+                                user_column += 1
                         else:
                             for media in ['V', 'A', 'R', 'K']:  
                                 media_point = Exercise.query.filter_by(user_id=user.id, topic_id = topic.id, learntype=media).all()
@@ -123,8 +131,16 @@ def print_out_report():
                             score_vark = ''
                             num = 0
                             for ts in topic_score:
-                                score_vark += ts.learntype + ':' +str(int(float(ts.percent)))
-                                num += 1
+                                # score column
+                                # User --> learntype : score, ..
+                                if user.user_type == 'User':
+                                    score_vark += ts.learntype + ':' +str(int(float(ts.percent)))
+                                    num += 1
+                                # User1 --> learntype : score : time, ..
+                                else:
+                                    score_vark += ts.learntype + ':' +str(int(float(ts.percent))) + ':' +str(int(float(ts.time)))
+                                    num += 1
+
                                 if num < len(topic_score):
                                     score_vark += ', '
                             sheet.cell(row=user_row_start, column=user_column).value = len(topic_score)
@@ -134,7 +150,7 @@ def print_out_report():
             user_row_start += 1
     workbook.save(filename="vark_report.xlsx")
 
-#print_out_report()
+print_out_report()
 
 
 def chapter_summary():
@@ -194,3 +210,27 @@ def chapter_summary():
 #chapter_summary()
 
 
+from datetime import datetime
+start=datetime.now()
+
+for i in range(0, 100000):
+    print(i)
+
+time = datetime.now()-start
+print(start)
+print(int(str(time).split(':')[1]))
+datetime_object = datetime.strptime('2020-04-22 21:11:51.713816', '%Y-%m-%d %H:%M:%S.%f')
+print(type(datetime_object))
+
+
+time_delta = (datetime.now() - datetime.strptime('2020-04-22 21:33:1.713816', '%Y-%m-%d %H:%M:%S.%f'))
+
+total_seconds = time_delta.total_seconds()
+
+minutes = total_seconds/60
+
+
+print(minutes)
+
+my_us = User.query.filter_by(email='5906021610078@fitm.kmutnb.ac.th').first().user_type
+print(my_us)

@@ -61,6 +61,8 @@ class Exercise(db.Model):
     percent = db.Column(db.String(10), unique=False, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
+    time = db.Column(db.String(10), unique=False, nullable=True)
+
     def __repr__(self):
         return f"Exercise('{self.topic_id}','{self.learntype}','{self.fullpoint}','{self.getpoint}','{self.percent}','{self.user_id}')"
 

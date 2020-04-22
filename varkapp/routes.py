@@ -5,6 +5,9 @@ from varkapp.models import get_content, User, Topic, Exercise, Content, Chapter
 from flask_login import login_user, current_user, logout_user, login_required
 import pdfplumber
 import glob
+from datetime import datetime
+
+
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
 
@@ -46,7 +49,7 @@ def registration():
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         user = User(gender=form.gender.data, firstname=form.firstname.data, 
-                    lastname=form.lastname.data, age=form.age.data, email=form.email.data, password=hashed_password, user_type='User')
+                    lastname=form.lastname.data, age=form.age.data, email=form.email.data, password=hashed_password, user_type='User1')
         db.session.add(user)
         db.session.commit()
         flash('Your account has been created! You are now able to log in', 'success')
@@ -79,6 +82,9 @@ def display_exercise():
     if request.method == 'POST':
         # display excercise
         # question number for check question line in text.
+
+        start=datetime.now()
+
         q_number = []
         for num in range(1,20):
             q_number.append(str(num))
@@ -189,7 +195,7 @@ def display_exercise():
                     tempt_choice = dict()
 
         return render_template('exercise.html', content = exercise_content, title = text[0], testfile=testfile,\
-                                chapterid=chapterid, topicid=topicid, learntype=learntype)
+                                chapterid=chapterid, topicid=topicid, learntype=learntype, start_time = start)
 
 @app.route('/submit_exercise', methods=['GET', 'POST'])
 def submit_exercise():
@@ -203,6 +209,19 @@ def submit_exercise():
         chapterid = request.form.get('chapterid')
         topicid = request.form.get('topicid')
         learntype = request.form.get('learntype')
+        # exercise time
+        str_start_time = request.form.get('start_time')
+        start_time = datetime.strptime(str_start_time, '%Y-%m-%d %H:%M:%S.%f')
+        time_delta = (datetime.now() - start_time)
+        total_seconds = time_delta.total_seconds()
+        minutes = total_seconds/60
+
+        exercise_time = 0
+        if minutes < 1:
+            exercise_time = 1
+        else:
+            exercise_time = minutes
+
         if learntype == "":
                 learntype = "-"
 
@@ -250,8 +269,14 @@ def submit_exercise():
         exerciseDB = Exercise.query.filter_by(user_id=userid, topic_id=db_topicid).first()
         # add new exercise score
         percent = (get_points/full_point) * 100
-        exerciseDB = Exercise(learntype=learntype, fullpoint=full_point, getpoint=get_points,percent=percent,\
-                                user_id=userid, topic_id=db_topicid)
+        if User.query.filter_by(email=current_user.email).first().user_type == 'User':
+            exerciseDB = Exercise(learntype=learntype, fullpoint=full_point, getpoint=get_points,percent=percent,\
+                                    user_id=userid, topic_id=db_topicid)
+        else:
+            print(exercise_time)
+            exerciseDB = Exercise(learntype=learntype, fullpoint=full_point, getpoint=get_points,percent=percent,\
+                                    user_id=userid, topic_id=db_topicid, time=exercise_time)
+
         db.session.add(exerciseDB)
         db.session.commit()
         print(Topic.query.filter_by(id=db_topicid).first(), " : Submit")
