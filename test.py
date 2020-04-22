@@ -134,7 +134,7 @@ def print_out_report():
             user_row_start += 1
     workbook.save(filename="vark_report.xlsx")
 
-print_out_report()
+#print_out_report()
 
 
 def chapter_summary():
