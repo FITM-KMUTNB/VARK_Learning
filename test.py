@@ -229,8 +229,6 @@ minutes = total_seconds/60
 
 print(minutes)
 
-all_user = User.query.all()
-
-
-for au in all_user:
-    print(au)
+excercises = Exercise.query.all()
+for e in excercises:
+    print(e)
