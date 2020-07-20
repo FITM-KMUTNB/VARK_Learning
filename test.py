@@ -1,4 +1,4 @@
-from varkapp.models import Content, User, Topic, Exercise, Chapter
+from varkapp.models import Content, User, Topic, Exercise, Chapter, db
 from flask_login import current_user
 
 def topic_summary():
@@ -150,7 +150,7 @@ def print_out_report():
             user_row_start += 1
     workbook.save(filename="vark_report.xlsx")
 
-print_out_report()
+#print_out_report()
 
 
 def chapter_summary():
@@ -213,9 +213,6 @@ def chapter_summary():
 from datetime import datetime
 start=datetime.now()
 
-for i in range(0, 100000):
-    print(i)
-
 time = datetime.now()-start
 print(start)
 print(int(str(time).split(':')[1]))
@@ -232,5 +229,8 @@ minutes = total_seconds/60
 
 print(minutes)
 
-my_us = User.query.filter_by(email='5906021610078@fitm.kmutnb.ac.th').first().user_type
-print(my_us)
+all_user = User.query.all()
+
+
+for au in all_user:
+    print(au)

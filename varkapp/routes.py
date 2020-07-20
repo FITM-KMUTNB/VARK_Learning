@@ -351,6 +351,7 @@ def chapter_summary():
     return chapter_sum
 
 from openpyxl import Workbook
+
 def print_out_report():
     workbook = Workbook()
     sheet = workbook.active
@@ -384,15 +385,15 @@ def print_out_report():
                 chapter_merge += 6
                 topic_merge = 6
                 content_start_column = topic_start_column 
-                for media in ['V', 'A', 'R', 'K','Times', 'Score']:
+                for media in ['V', 'A', 'R', 'K','Ex Count', 'All score']:
                     sheet.cell(row=content_row, column=content_start_column).value = media
                     content_start_column += 1
             else:
-                chapter_merge += 1
-                topic_merge = 1
-                sheet.cell(row=content_row, column=topic_start_column).value = topic.number
+                chapter_merge += 2
+                topic_merge = 2
+                sheet.cell(row=content_row, column=topic_start_column).value = 'Score'
+                sheet.cell(row=content_row, column=topic_start_column+1).value = 'Time'
 
-            #print(topic.number, ", topic merge: ", topic_merge)
             topic_end_column = topic_start_column + topic_merge - 1
             sheet.merge_cells(start_row=topic_row, start_column=topic_start_column, end_row=topic_row, end_column=topic_end_column)
             sheet.cell(row=topic_row, column=topic_start_column).value = topic.number
@@ -430,6 +431,13 @@ def print_out_report():
                         if topic.number == 'P' or topic.number == 'T':
                             sheet.cell(row=user_row_start, column=user_column).value = user_excercise.percent
                             user_column += 1
+                            # type = User, not have time stramp in exercise 
+                            if user.user_type == 'User':
+                                sheet.cell(row=user_row_start, column=user_column).value = '-'
+                                user_column += 1
+                            else:
+                                sheet.cell(row=user_row_start, column=user_column).value = user_excercise.time
+                                user_column += 1
                         else:
                             for media in ['V', 'A', 'R', 'K']:  
                                 media_point = Exercise.query.filter_by(user_id=user.id, topic_id = topic.id, learntype=media).all()
@@ -449,8 +457,16 @@ def print_out_report():
                             score_vark = ''
                             num = 0
                             for ts in topic_score:
-                                score_vark += ts.learntype + ':' +str(int(float(ts.percent)))
-                                num += 1
+                                # score column
+                                # User --> learntype : score, ..
+                                if user.user_type == 'User':
+                                    score_vark += ts.learntype + ':' +str(int(float(ts.percent)))
+                                    num += 1
+                                # User1 --> learntype : score : time, ..
+                                else:
+                                    score_vark += ts.learntype + ':' +str(int(float(ts.percent))) + ':' +str(int(float(ts.time)))
+                                    num += 1
+
                                 if num < len(topic_score):
                                     score_vark += ', '
                             sheet.cell(row=user_row_start, column=user_column).value = len(topic_score)
@@ -459,3 +475,4 @@ def print_out_report():
                             user_column += 1
             user_row_start += 1
     workbook.save(filename="varkapp/vark_report.xlsx")
+
