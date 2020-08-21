@@ -474,5 +474,6 @@ def print_out_report():
                             sheet.cell(row=user_row_start, column=user_column).value = score_vark
                             user_column += 1
             user_row_start += 1
+    #workbook.save(filename="varkapp/vark_report.xlsx")
     workbook.save(filename="/var/www/webroot/varkapp/vark_report.xlsx")
 
