@@ -294,7 +294,7 @@ def submit_exercise():
 @app.route('/vark_report')
 def vark_report():
     print_out_report()
-    return send_file('/var/www/webroot/varkapp/vark_report.xlsx',  as_attachment=True, mimetype='application/vnd.ms-excel',)
+    return send_file('vark_report.xlsx',  as_attachment=True, mimetype='application/vnd.ms-excel',)
 
 def chapter_summary():
     chapter_sum = dict() #{1: {'V': 25, 'R': 53, 'A': 80, 'K': 50}}
@@ -474,5 +474,5 @@ def print_out_report():
                             sheet.cell(row=user_row_start, column=user_column).value = score_vark
                             user_column += 1
             user_row_start += 1
-    workbook.save(filename="varkapp/vark_report.xlsx")
+    workbook.save(filename="/var/www/webroot/varkapp/vark_report.xlsx")
 
