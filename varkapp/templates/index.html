@@ -5,6 +5,19 @@
 <div id="content">
 </div>
 
+<!-- Modal -->
+<div class="modal fade" id="vark_content_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div id="vark-content-modal-body" style="text-align: center;height: 80vh;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+</div>
 <script>
     var chapter = JSON.parse('{{ chapter|tojson }}');
     var topic = JSON.parse('{{ topic|tojson }}');
@@ -150,11 +163,23 @@
                 }
 
                 if(vk == 'K'){
-                    varke_content += "<a href='#' name="+chapter_id+topic_number+" onclick='openklist("+JSON.stringify(content[content_index][vk])+");enable_exercise("+excercise_index+");'>"+content_name+"</a>"
+                    varke_content += "<a name="+chapter_id+topic_number+" data-toggle='modal' href='#vark_content_modal' onclick='k_openswf("+JSON.stringify(content[content_index][vk])+");learn_type(\""+vk+"\"); enable_exercise("+excercise_index+");'> "+content_name+" </a>";
+                    //varke_content += "<a href='#' name="+chapter_id+topic_number+" onclick='openklist("+JSON.stringify(content[content_index][vk])+");enable_exercise("+excercise_index+");'>"+content_name+"</a>"
                 }
                 else{
+                    if(vk=='V'){
+                        varke_content += '<a name='+chapter_id+topic_number+' data-toggle="modal" href="#vark_content_modal" onclick="v_openpdf(\''+content[content_index][vk]+'\');learn_type(\''+vk+'\');enable_exercise('+excercise_index+');"> '+content_name+' </a>';
+                    }
+                    else if(vk=='A'){
+                        varke_content += '<a name='+chapter_id+topic_number+' data-toggle="modal" href="#vark_content_modal" onclick="r_openautdio(\''+content[content_index][vk]+'\');learn_type(\''+vk+'\');enable_exercise('+excercise_index+');"> '+content_name+' </a>';
+                    }
+                    else if(vk=='R'){
+                        varke_content += '<a name='+chapter_id+topic_number+' data-toggle="modal" href="#vark_content_modal" onclick="v_openpdf(\''+content[content_index][vk]+'\');learn_type(\''+vk+'\');enable_exercise('+excercise_index+');"> '+content_name+' </a>';
+                    }
+                    /*
                     varke_content += '<a href="'+content[content_index][vk]+'" name='+chapter_id+topic_number+' target="popup" onclick="window.open(\''+content[content_index][vk]+'\',\'popup\',\'width=1000,height=800\');'+
                                 'learn_type(\''+vk+'\');enable_exercise('+excercise_index+'); return false;"> '+content_name+' </a>';
+                    */
                 }
                 
             }
@@ -165,6 +190,37 @@
 
     }
 
+    function v_openpdf(pdfpath){
+        PDFObject.embed(pdfpath, "#vark-content-modal-body");
+    }
+
+    function r_openautdio(audiopath){
+        $("#vark-content-modal-body").html(
+            '<audio controls style="width: 100%;"><source src="'+audiopath+'" type="audio/ogg">'+
+            '<source src="'+audiopath+'" type="audio/mpeg"></audio>'
+        )
+    }
+    
+    function k_openswf(kfile){
+        var k_listbtn = '<div class="row"><div class="col-md-12 text-center">';
+        var part = 1;
+        for (k in kfile) {
+            
+            k_listbtn += '<button type="button" class="btn btn-primary" style="width:40px; margin-right:5px;" onclick="openkfile(\''+kfile[k]+'\')">'+part+'</button>'
+            part++;
+        }
+        k_listbtn += '</div></div>'
+        var swfbox = '<div class="row">'+
+            '<div id="display-kfile-box" style="text-align:center">To Open This Content, The Adobe Flash Player Must Be Installed First.</div>'+
+        '</div>'
+        $("#vark-content-modal-body").html(
+            k_listbtn + swfbox
+        )
+
+    }
+    function openkfile(kfile){
+        swfobject.embedSWF(kfile, "display-kfile-box",  "100%", "600", "9.0.0");
+    }
     function disabled_pass_topic(){
         
         for(var chapter_id in chapter){
@@ -333,6 +389,17 @@
     
     display_content()
     disabled_pass_topic()
+    $('#vark_content_modal').on('hide.bs.modal', function () { //Change #myModal with your modal id
+        $('audio').each(function(){
+            this.pause(); // Stop playing
+            this.currentTime = 0; // Reset time
+        }); 
+       
+        try {
+            swfobject.getObjectById('display-kfile-box').StopPlay();
+        } catch (e) {
+        }
+    })
 </script>
 
 {% endblock content%}
