@@ -103,9 +103,9 @@ def display_exercise():
 
         #pdf = pdfplumber.open("varkapp/"+testfile)
         testfile = testfile.replace(' ', '_')
+        testfile = testfile.replace('static/', '')
+        print(testfile)
         pdf = pdfplumber.open('~/ROOT/varkapp/'+testfile)
-
-        pdf = pdfplumber.open('/var/www/webroot/ROOT/varkapp/'+testfile)
         print(testfile)
         text = []
         for page in range(0, len(pdf.pages)):
