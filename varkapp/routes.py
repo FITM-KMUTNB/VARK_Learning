@@ -102,6 +102,9 @@ def display_exercise():
         learntype = request.form['learntype']
 
         #pdf = pdfplumber.open("varkapp/"+testfile)
+        testfile = testfile.replace(' ', '_')
+        pdf = pdfplumber.open('~/ROOT/varkapp/'+testfile)
+
         pdf = pdfplumber.open('/var/www/webroot/ROOT/varkapp/'+testfile)
         print(testfile)
         text = []
