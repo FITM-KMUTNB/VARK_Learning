@@ -101,7 +101,8 @@ def display_exercise():
         topicid = request.form['topicid']
         learntype = request.form['learntype']
 
-        pdf = pdfplumber.open("varkapp/"+testfile)
+        #pdf = pdfplumber.open("varkapp/"+testfile)
+        pdf = pdfplumber.open('./'+testfile)
         print(testfile)
         text = []
         for page in range(0, len(pdf.pages)):
