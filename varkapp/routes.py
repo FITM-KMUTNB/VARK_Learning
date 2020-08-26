@@ -113,11 +113,6 @@ def display_exercise():
         testfile = testfile.replace('static/', '')
         print(testfile)
         pdf = pdfplumber.open('~/ROOT/varkapp/'+testfile)
-<<<<<<< HEAD
-=======
-
-        pdf = pdfplumber.open(testfile)
->>>>>>> e913a25b33958e54338b3d3f34b226f5f971b230
         print(testfile)
         text = []
         for page in range(0, len(pdf.pages)):
