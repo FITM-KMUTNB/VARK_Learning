@@ -102,7 +102,7 @@ def display_exercise():
         learntype = request.form['learntype']
 
         #pdf = pdfplumber.open("varkapp/"+testfile)
-        pdf = pdfplumber.open('/ROOT/varkapp/'+testfile)
+        pdf = pdfplumber.open('~/ROOT/varkapp/'+testfile)
         print(testfile)
         text = []
         for page in range(0, len(pdf.pages)):
