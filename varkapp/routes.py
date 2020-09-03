@@ -308,7 +308,7 @@ def submit_exercise():
 @app.route('/vark_report')
 def vark_report():
     print_out_report()
-    return send_file('vark_report.xlsx',  as_attachment=True, mimetype='application/vnd.ms-excel',)
+    return send_file('/var/www/webroot/ROOT/varkapp/vark_report.xlsx',  as_attachment=True, mimetype='application/vnd.ms-excel',)
 
 
 def chapter_summary():
@@ -512,5 +512,5 @@ def print_out_report():
                             user_column += 1
             user_row_start += 1
     # workbook.save(filename="varkapp/vark_report.xlsx")
-    workbook.save(filename="vark_report.xlsx")
+    workbook.save(filename="/var/www/webroot/ROOT/varkapp/vark_report.xlsx")
 
