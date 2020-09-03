@@ -511,6 +511,6 @@ def print_out_report():
                                        column=user_column).value = score_vark
                             user_column += 1
             user_row_start += 1
-    # workbook.save(filename="varkapp/vark_report.xlsx")
+    #workbook.save(filename="varkapp/vark_report.xlsx")
     workbook.save(filename="/var/www/webroot/ROOT/varkapp/vark_report.xlsx")
 
