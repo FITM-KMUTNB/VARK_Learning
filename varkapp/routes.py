@@ -107,7 +107,7 @@ def display_exercise():
         chapterid = request.form['chapterid']
         topicid = request.form['topicid']
         learntype = request.form['learntype']
-        testfile = testfile.replace('static/', '/')
+        testfile = testfile.replace('static/', './')
         print(testfile)
         pdf = pdfplumber.open(testfile)
         
