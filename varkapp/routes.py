@@ -107,13 +107,12 @@ def display_exercise():
         chapterid = request.form['chapterid']
         topicid = request.form['topicid']
         learntype = request.form['learntype']
-
-        #pdf = pdfplumber.open("varkapp/"+testfile)
-        testfile = testfile.replace(' ', '_')
-        #testfile = testfile.replace('static/', '')
-        testfile = 'varkapp/static/การสร้างสื่อดิจิทัล/chapter1/A/PreCh1.pdf'
-        pdf = pdfplumber.open(testfile)
         print(testfile)
+        pdf = pdfplumber.open("varkapp/"+testfile)
+        
+        #testfile = testfile.replace('static/', '')
+        #pdf = pdfplumber.open(testfile)
+        
         text = []
         for page in range(0, len(pdf.pages)):
             pages = pdf.pages[page].extract_text().splitlines()
@@ -515,3 +514,4 @@ def print_out_report():
             user_row_start += 1
     # workbook.save(filename="varkapp/vark_report.xlsx")
     workbook.save(filename="vark_report.xlsx")
+

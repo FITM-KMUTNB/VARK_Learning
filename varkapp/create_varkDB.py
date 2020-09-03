@@ -43,7 +43,7 @@ class Content(db.Model):
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
    
     def __repr__(self):
-        return f"Content('{self.file_name}','{self.c_type}')"
+        return f"Content('{self.file_name}','{self.c_type}','{self.topic_id}')"
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     gender = db.Column(db.String(10), unique=False, nullable=False)
@@ -217,4 +217,45 @@ def get_content():
 
     return chapters, topics, contents
 
-create_varkdb()
+#create_varkdb()
+
+def update_content_path():
+    for c in Content.query.all():
+        c.file_name = c.file_name.replace('การสร้างสื่อดิจิทัล', 'digital_media_creation')
+        db.session.commit()
+    for c in Content.query.all():
+        c.file_name = c.file_name.replace('บทที่ 1  รู้จักกับการตัดต่อภาพยนตร์', 'chapter1')
+        db.session.commit()
+    for c in Content.query.all():
+        c.file_name = c.file_name.replace('บทที่ 2  ขั้นตอนการทำงานในงานตัดต่อวิดีโอ', 'chapter2')
+        db.session.commit()
+    for c in Content.query.all():
+        c.file_name = c.file_name.replace('บทที่ 3  การทำงานกับโปรเจ็กต์', 'chapter3')
+        db.session.commit()
+    for c in Content.query.all():
+        c.file_name = c.file_name.replace('บทที่ 4  จัดการซีเควนซืและการใช้งานคลิป', 'chapter4')
+        db.session.commit()
+    for c in Content.query.all():
+        c.file_name = c.file_name.replace('บทที่ 5  การตัดต่อบน Timeline', 'chapter5')
+        db.session.commit()
+    for c in Content.query.all():
+        c.file_name = c.file_name.replace('บทที่ 6 การสร้างทรานซิชัน เอฟเฟกต์และภาพเคลื่อนไหว', 'chapter6')
+        db.session.commit()
+    for c in Content.query.all():
+        c.file_name = c.file_name.replace('บทที่ 7 การใส่เสียงและการเผยแพร่ผลงาน', 'chapter7')
+        db.session.commit()
+ 
+    for c in Content.query.all():
+        if 'แบบทดสอบก่อนเรียน' in c.file_name.split('/')[3]:
+            c.file_name = c.file_name.replace('แบบทดสอบก่อนเรียน', 'Pretest')
+        elif 'แบบทดสอบหลังเรียน' in c.file_name.split('/')[3]:
+            c.file_name = c.file_name.replace('แบบทดสอบหลังเรียน', 'Posttest')
+        else:
+            c.file_name = c.file_name.replace(c.file_name.split('/')[3], c.file_name.split('/')[3].split(' ')[0])
+        db.session.commit()
+    for c in Content.query.all():
+        if 'Exercise' in c.file_name.split('/')[4]:
+            c.file_name = c.file_name.replace(c.file_name.split('/')[4], c.file_name.split('/')[4].replace(' ', '_'))
+            db.session.commit()
+    for c in Content.query.all():
+        print(c.file_name)
