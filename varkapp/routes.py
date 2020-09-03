@@ -110,8 +110,8 @@ def display_exercise():
 
         #pdf = pdfplumber.open("varkapp/"+testfile)
         testfile = testfile.replace(' ', '_')
-        testfile = testfile.replace('static/', '')
-        print(testfile)
+        #testfile = testfile.replace('static/', '')
+        testfile = 'varkapp/static/การสร้างสื่อดิจิทัล/chapter1/A/PreCh1.pdf'
         pdf = pdfplumber.open(testfile)
         print(testfile)
         text = []
