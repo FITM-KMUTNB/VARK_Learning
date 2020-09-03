@@ -243,7 +243,7 @@ def submit_exercise():
         # get anwser file path
         file_path = testfile.split("/")
         del file_path[-1]
-        answer_file = "varkapp/"
+        answer_file = "/var/www/webroot/ROOT/varkapp/"
         for p in range(len(file_path)):
             answer_file += file_path[p]+"/"
 
