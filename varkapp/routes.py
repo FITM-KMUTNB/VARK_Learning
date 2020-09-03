@@ -7,12 +7,14 @@ from flask_login import login_user, current_user, logout_user, login_required
 import pdfplumber
 import glob
 from datetime import datetime
-
+import os
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
+    cwd = os.getcwd()
+    print(cwd)
     chapter, topic, content = get_content()
     userid = User.query.filter_by(email=current_user.email).first().id
     exerciseDB = Exercise.query.filter_by(user_id=userid).all()
@@ -40,7 +42,7 @@ def index():
                 float(ex.percent))
 
     return render_template('index.html', title="VARK", chapter=chapter, topic=topic, content=content,
-                           user_exercise=user_exercise, User=User, Topic=Topic, chapter_sum=chapter_sum)
+                           user_exercise=user_exercise, User=User, Topic=Topic, chapter_sum=chapter_sum, cwd=cwd)
 
 
 @app.route('/registration', methods=['GET', 'POST'])
@@ -107,9 +109,8 @@ def display_exercise():
         chapterid = request.form['chapterid']
         topicid = request.form['topicid']
         learntype = request.form['learntype']
-        testfile = testfile.replace('static/', './')
         print(testfile)
-        pdf = pdfplumber.open(testfile)
+        pdf = pdfplumber.open('/var/www/webroot/ROOT/varkapp/'+testfile)
         
         text = []
         for page in range(0, len(pdf.pages)):
