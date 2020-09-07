@@ -110,6 +110,7 @@ def display_exercise():
         topicid = request.form['topicid']
         learntype = request.form['learntype']
         print(testfile)
+        #pdf = pdfplumber.open('varkapp/'+testfile)
         pdf = pdfplumber.open('/var/www/webroot/ROOT/varkapp/'+testfile)
         
         text = []
@@ -244,6 +245,7 @@ def submit_exercise():
         file_path = testfile.split("/")
         del file_path[-1]
         answer_file = "/var/www/webroot/ROOT/varkapp/"
+        #answer_file = "varkapp/"
         for p in range(len(file_path)):
             answer_file += file_path[p]+"/"
 
